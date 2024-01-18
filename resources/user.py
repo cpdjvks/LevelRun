@@ -1,5 +1,5 @@
 from flask import request
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt, jwt_required
 from flask_restful import Resource
 from mysql_connection import get_connection
 from mysql.connector import Error
@@ -94,11 +94,9 @@ class UserLoginResource(Resource) :
         # 가입정보 확인
         if len(result_list) == 0 :
             return {"Error" : "회원가입된 정보가 없습니다."}, 400
-        
-        print()
-        print(result_list[0]['password'])
+                
         password = str(data['password'])
-        print()
+        
 
         check = check_password(password, result_list[0]['password'])
         if check == False :
@@ -108,3 +106,17 @@ class UserLoginResource(Resource) :
         access_token = create_access_token(result_list[0]['id'])
 
         return {"result" : "success", "accessToken" : access_token}, 200
+    
+jwt_blocklist = set()
+class UserLogoutResource(Resource) :            # 로그아웃
+    @jwt_required()
+    def delete(self) :
+        jti = get_jwt()['jti']          # 토큰안에 있는 jti 정보
+        print()
+        print(jti)
+        print()
+        jwt_blocklist.add(jti)
+
+        return {"result" : "success"}, 200
+
+
