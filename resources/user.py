@@ -39,10 +39,24 @@ class UserRegisterResource(Resource) :
             cursor = connection.cursor()
             cursor.execute(query, record)
 
-            connection.commit()
+            
 
-            # 데이터베이스에서 받아온 유저 아이디 암호화
-            user_id = cursor.lastrowid
+            # 회원가입시 생성한 유저아이디를 데이터베이스에서 가져와
+            # 초기 랭크테이블 정보를 넣어준다.
+            userId = cursor.lastrowid            
+
+            query = '''insert into `rank`
+                        (userId)
+                        values
+                        (%s);'''
+
+            record = (userId,)
+            
+            # 커서 초기화 
+            cursor = connection.cursor()
+            cursor.execute(query, record)            
+
+            connection.commit()
 
             cursor.close()
             connection.close()
@@ -55,7 +69,7 @@ class UserRegisterResource(Resource) :
             return {"Error" : str(e)}, 500
         
         # user 테이블의 id로 JWT 토큰을 만들어야 한다.
-        access_token = create_access_token(user_id)
+        access_token = create_access_token(userId)
         
         return {"result" : "success", "accessToken" : access_token}, 200
 
