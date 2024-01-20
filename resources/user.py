@@ -42,10 +42,10 @@ class UserRegisterResource(Resource) :
             
 
             # 회원가입시 생성한 유저아이디를 데이터베이스에서 가져와
-            # 초기 랭크테이블 정보를 넣어준다.
+            # 초기 레벨 테이블 정보를 넣어준다.
             userId = cursor.lastrowid            
 
-            query = '''insert into `rank`
+            query = '''insert into level
                         (userId)
                         values
                         (%s);'''
