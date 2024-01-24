@@ -43,7 +43,7 @@ class UserRegisterResource(Resource) :
 
             # 회원가입시 생성한 유저아이디를 데이터베이스에서 가져와
             # 초기 레벨 테이블 정보를 넣어준다.
-            userId = cursor.lastrowid            
+            userId = cursor.lastrowid
 
             query = '''insert into level
                         (userId)
@@ -73,8 +73,7 @@ class UserRegisterResource(Resource) :
         
         return {"result" : "success", "accessToken" : access_token}, 200
 
-# todo : 카카오 회원가입
-class KakaoRegisterResource(Resource) :
+
     pass
 
 # 로그인
@@ -120,6 +119,106 @@ class UserLoginResource(Resource) :
         access_token = create_access_token(result_list[0]['id'])
 
         return {"result" : "success", "accessToken" : access_token}, 200
+    
+
+# 카카오 가입 닉네임 중복 체크
+class KakaoLoginResource(Resource) :
+    def post(self) :
+        data = request.get_json()
+        nickName = data["nickName"]
+        email = data["email"]
+        password = data["password"]
+
+        try :
+            connection = get_connection()
+
+            query = '''select id, nickName, email, password
+                    from user
+                    where email = %s;'''
+            
+            record = (email,)
+
+            # 딕셔너리 형태로 가져옴
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
+            # 이메일 정보가 있을 때
+            if len(result_list) != 0 :
+                if result_list[0]['password'] != 'kakao' :
+                    cursor.close()
+                    connection.close()
+                    return {"Error" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 400
+            
+                # 카카오 유저 데이터 베이스에  이력이 있을 경우 로그인 
+                else :
+                    # 암호화 토큰생성
+                    cursor.close()
+                    connection.close()
+
+                    access_token = create_access_token(result_list[0]['id'])
+
+                    return {"result" : "success", "accessToken" : access_token}, 200
+            
+            
+            # 데이터 베이스에 가입정보가 없으면 정보를 저장한다.
+            # 닉네임 중복검사
+            query = '''select id, nickName, email, password
+                    from user
+                    where nickName = %s;'''
+            
+            record = (nickName,)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
+            # 이미 만들어진 이메일이 있을 때
+            if len(result_list) != 0 :
+                cursor.close()
+                connection.close()
+                return {"Error" : "중복된 닉네임이 존재 합니다."}, 400
+
+            query = '''insert into user
+                        (nickName, email, password)
+                        value(%s, %s, %s);'''
+            record = (nickName, email, password)
+
+            # 위에서 한번 사용했기 때문에 커서 초기화 시킨다.
+            connection.cursor()
+            cursor.execute(query, record)
+
+            
+            # 회원가입시 생성한 유저아이디를 데이터베이스에서 가져와
+            # 초기 레벨 테이블 정보를 넣어준다.
+            userId = cursor.lastrowid
+
+            query = '''insert into level
+                        (userId)
+                        values
+                        (%s);'''
+
+            record = (userId,)
+            
+            # 커서 초기화 
+            cursor = connection.cursor()
+            cursor.execute(query, record)            
+            connection.commit()            
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+
+            return {"fail" : str(e)}, 500        
+        
+        # 암호화 토큰생성
+        access_token = create_access_token(userId)
+
+        return {"result" : "success", "accessToken" : access_token}, 200
+
     
 jwt_blocklist = set()
 class UserLogoutResource(Resource) :            # 로그아웃

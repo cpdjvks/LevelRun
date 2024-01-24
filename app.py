@@ -4,7 +4,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from config import Config
-from resources.user import UserLoginResource, UserLogoutResource, UserRegisterResource
+from resources.user import KakaoLoginResource, UserLoginResource, UserLogoutResource, UserRegisterResource
 
 # 로그아웃 관련된 임포트문
 from resources.user import jwt_blocklist
@@ -29,8 +29,8 @@ api = Api(app)
 api.add_resource(UserRegisterResource,'/user/register') # 회원가입
 # api.add_resource(KakaoRegisterResource,'/user/register') # 카카오 회원가입
 api.add_resource(UserLoginResource, '/user/login')      # 로그인
-
-api.add_resource(UserLogoutResource, '/user/logout')
+api.add_resource(KakaoLoginResource, '/user/kakaoLogin')  # 카카오 유저 가입정보 확인
+api.add_resource(UserLogoutResource, '/user/logout') # 로그아웃
 # def handler(event, context) :
 #     return serverless_wsgi.handle_request(app, event, context)
 
