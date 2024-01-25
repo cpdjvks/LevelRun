@@ -146,8 +146,7 @@ class KakaoLoginResource(Resource) :
         data = request.get_json()
         nickName = data["nickName"]
         email = data["email"]        
-        profileUrl = data['profileUrl']
-        type = data['type']
+        profileUrl = data['profileUrl']        
 
         try :
             connection = get_connection()
@@ -165,12 +164,12 @@ class KakaoLoginResource(Resource) :
 
             # 이메일 정보가 있을 때
             if len(result_list) != 0 :
-                if result_list[0]['password'] != 'kakao' :
+                if result_list[0]['password'] is None :
                     cursor.close()
                     connection.close()
                     return {"result" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 400
             
-                # 카카오 유저 데이터 베이스에  이력이 있을 경우 로그인 
+                # 카카오 유저 데이터 베이스에 정보가 있을 경우 로그인 진행 
                 else :
                     # 암호화 토큰생성
                     cursor.close()
