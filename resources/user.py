@@ -28,17 +28,15 @@ class UserRegisterResource(Resource) :
         password = hash_password(data['password'])
 
         try :
-            connection = get_connection()        
+            connection = get_connection()
 
             query = '''insert into user
-                    (nickName, email, password)
-                    value(%s, %s, %s);'''
+                    (nickName, email, password, type)
+                    value(%s, %s, %s, 0);'''
             record = (data['nickName'], data['email'], password)
 
             cursor = connection.cursor()
             cursor.execute(query, record)
-
-            
 
             # 회원가입시 생성한 유저아이디를 데이터베이스에서 가져와
             # 초기 레벨 테이블 정보를 넣어준다.
@@ -53,7 +51,29 @@ class UserRegisterResource(Resource) :
             
             # 커서 초기화 
             cursor = connection.cursor()
+            cursor.execute(query, record)
+
+            # exercise 테이블 생성
+            query = '''insert into exercise
+                        (userId)
+                        values
+                        (%s);'''
+
+            record = (userId,)
+
+            cursor = connection.cursor()
             cursor.execute(query, record)            
+
+            # randomBox 테이블 생성
+            query = '''insert into randomBox
+                        (userId)
+                        values
+                        (%s);'''
+
+            record = (userId,)
+
+            cursor = connection.cursor()
+            cursor.execute(query, record)
 
             connection.commit()
 
@@ -125,9 +145,9 @@ class KakaoLoginResource(Resource) :
     def post(self) :
         data = request.get_json()
         nickName = data["nickName"]
-        email = data["email"]
-        password = data["password"]
+        email = data["email"]        
         profileUrl = data['profileUrl']
+        type = data['type']
 
         try :
             connection = get_connection()
@@ -181,9 +201,9 @@ class KakaoLoginResource(Resource) :
             
             # 회원가입
             query = '''insert into user
-                        (nickName, email, password, profileUrl)
-                        value(%s, %s, %s, %s);'''
-            record = (nickName, email, password, profileUrl)
+                        (nickName, email, profileUrl, type)
+                        value(%s, %s, %s, 1);'''
+            record = (nickName, email, profileUrl)
 
             # 위에서 한번 사용했기 때문에 커서 초기화 시킨다.
             connection.cursor()
@@ -228,7 +248,7 @@ class KakaoLoginResource(Resource) :
             cursor = connection.cursor()
             cursor.execute(query, record)  
 
-            connection.commit()            
+            connection.commit()
 
             cursor.close()
             connection.close()
