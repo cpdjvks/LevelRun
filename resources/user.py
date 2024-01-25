@@ -128,6 +128,7 @@ class KakaoLoginResource(Resource) :
         nickName = data["nickName"]
         email = data["email"]
         password = data["password"]
+        profileUrl = data['profileUrl']
 
         try :
             connection = get_connection()
@@ -177,11 +178,13 @@ class KakaoLoginResource(Resource) :
                 cursor.close()
                 connection.close()
                 return {"result" : "중복된 닉네임이 존재 합니다."}, 400
-
+            
+            
+            # 회원가입
             query = '''insert into user
-                        (nickName, email, password)
-                        value(%s, %s, %s);'''
-            record = (nickName, email, password)
+                        (nickName, email, password, profileUrl)
+                        value(%s, %s, %s, %s);'''
+            record = (nickName, email, password, profileUrl)
 
             # 위에서 한번 사용했기 때문에 커서 초기화 시킨다.
             connection.cursor()
@@ -192,6 +195,7 @@ class KakaoLoginResource(Resource) :
             # 초기 레벨 테이블 정보를 넣어준다.
             userId = cursor.lastrowid
 
+            # level 테이블 생성
             query = '''insert into level
                         (userId)
                         values
@@ -201,7 +205,30 @@ class KakaoLoginResource(Resource) :
             
             # 커서 초기화 
             cursor = connection.cursor()
+            cursor.execute(query, record)
+
+            # exercise 테이블 생성
+            query = '''insert into exercise
+                        (userId)
+                        values
+                        (%s);'''
+
+            record = (userId,)
+
+            cursor = connection.cursor()
             cursor.execute(query, record)            
+
+            # randomBox 테이블 생성
+            query = '''insert into randomBox
+                        (userId)
+                        values
+                        (%s);'''
+
+            record = (userId,)
+
+            cursor = connection.cursor()
+            cursor.execute(query, record)  
+
             connection.commit()            
 
             cursor.close()
