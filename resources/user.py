@@ -4,7 +4,6 @@ from flask_restful import Resource
 from mysql_connection import get_connection
 from mysql.connector import Error
 
-import requests
 from email_validator import EmailNotValidError, validate_email
 from utils import check_password, hash_password
 
