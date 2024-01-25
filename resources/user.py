@@ -18,17 +18,46 @@ class UserRegisterResource(Resource) :
 
         except EmailNotValidError as e :
             print(e)
-            return {"Error" : str(e)}, 400
+            return {"result" : str(e)}, 400
 
         # 비밀번호 길이 검사
         if len(data['password']) < 4 and len(data['password']) > 14 :
-            return {"Error" : "비밀번호 길이가 올바르지 않습니다."}, 400
+            return {"result" : "비밀번호 길이가 올바르지 않습니다."}, 400
 
         # 단방향 암호화된 비밀번호를 저장
         password = hash_password(data['password'])
 
         try :
             connection = get_connection()
+
+            # 닉네임 중복 검사
+            query = '''select *
+                    from user
+                    where nickName = %s;'''
+            record = (data['nickName'],)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+
+            result_list = cursor.fetchall()
+
+            if len(result_list) != 0 :
+                return {"result" : "중복된 닉네임이 존재 합니다."}, 400
+            
+            #  이메일 중복 검사
+            query = '''select *
+                    from user
+                    where email = %s;'''
+            record = (data['email'],)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+
+            result_list = cursor.fetchall()
+
+            if len(result_list) != 0 :
+                return {"result" : "중복된 이메일이 존재 합니다."}, 400
+            
+
+            # 중복검사 후 이상 없으면 회원가입 진행
 
             query = '''insert into user
                     (nickName, email, password, type)
