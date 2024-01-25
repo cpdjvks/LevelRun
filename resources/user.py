@@ -148,7 +148,7 @@ class KakaoLoginResource(Resource) :
                 if result_list[0]['password'] != 'kakao' :
                     cursor.close()
                     connection.close()
-                    return {"Error" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 400
+                    return {"result" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 400
             
                 # 카카오 유저 데이터 베이스에  이력이 있을 경우 로그인 
                 else :
@@ -176,7 +176,7 @@ class KakaoLoginResource(Resource) :
             if len(result_list) != 0 :
                 cursor.close()
                 connection.close()
-                return {"Error" : "중복된 닉네임이 존재 합니다."}, 400
+                return {"result" : "중복된 닉네임이 존재 합니다."}, 400
 
             query = '''insert into user
                         (nickName, email, password)
