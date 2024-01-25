@@ -121,18 +121,18 @@ class UserLoginResource(Resource) :
             cursor.close()
             connection.close()
 
-            return {"fail" : str(e)}, 500        
+            return {"result" : str(e)}, 500        
 
         # 가입정보 확인
         if len(result_list) == 0 :
-            return {"Error" : "회원가입된 정보가 없습니다."}, 400
+            return {"result" : "회원가입된 정보가 없습니다."}, 400
                 
         password = str(data['password'])
         
 
         check = check_password(password, result_list[0]['password'])
         if check == False :
-            return {"error" : "비밀번호가 맞지 않습니다."}, 406
+            return {"result" : "비밀번호가 맞지 않습니다."}, 406
         
         # 암호화 토큰생성
         access_token = create_access_token(result_list[0]['id'])
@@ -164,7 +164,7 @@ class KakaoLoginResource(Resource) :
 
             # 이메일 정보가 있을 때
             if len(result_list) != 0 :
-                if result_list[0]['password'] is None :
+                if result_list[0]['password'] is not None :
                     cursor.close()
                     connection.close()
                     return {"result" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 400
@@ -264,7 +264,9 @@ class KakaoLoginResource(Resource) :
 
         return {"result" : "success", "accessToken" : access_token}, 200
 
-    
+
+# Class
+
 jwt_blocklist = set()
 class UserLogoutResource(Resource) :            # 로그아웃
     @jwt_required()
