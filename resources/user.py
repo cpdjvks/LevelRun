@@ -315,12 +315,12 @@ class UserLogoutResource(Resource) :
         return {"result" : "success"}, 200
 
 
-# 유저정보
+# 유저 정보 수정
 class UserInfoResource(Resource) :
     @jwt_required()
     def put(self) :
 
-        file = request.files.get('image')
+        file = request.files.get('imgProfile')
         nickName = request.form.get('nickName')
 
         userId = get_jwt_identity()
@@ -348,13 +348,13 @@ class UserInfoResource(Resource) :
             connection = get_connection()
 
             query = '''update user
-                        set imgUrl = %s
+                        set profileUrl = %s
                         nickName = %s
                         where userId = %s;'''
             
-            imgUrl = Config.S3_LOCATION + file.filename
+            profileUrl = Config.S3_LOCATION + file.filename
 
-            record = (imgUrl, nickName, userId)
+            record = (profileUrl, nickName, userId)
 
             cursor = connection.cursor()
             cursor.execute(query, record)
