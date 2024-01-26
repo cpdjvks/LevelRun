@@ -167,7 +167,6 @@ class UserLoginResource(Resource) :
         access_token = create_access_token(result_list[0]['id'])
 
         return {"result" : "success", "accessToken" : access_token}, 200
-<<<<<<< Updated upstream
     
 
 # 카카오 가입 닉네임 중복 체크
@@ -297,10 +296,8 @@ class KakaoLoginResource(Resource) :
 
 # Class
 
-=======
 
 # 로그아웃
->>>>>>> Stashed changes
 jwt_blocklist = set()
 class UserLogoutResource(Resource) :           
     @jwt_required()
@@ -312,6 +309,7 @@ class UserLogoutResource(Resource) :
         jwt_blocklist.add(jti)
 
         return {"result" : "success"}, 200
+
 
 # 유저정보
 class UserInfoResource(Resource) :
