@@ -1,4 +1,4 @@
-# import serverless_wsgi    # docker
+import serverless_wsgi    # docker
 
 from flask import Flask
 from flask_jwt_extended import JWTManager
@@ -13,7 +13,6 @@ app = Flask(__name__)
 
 # 환경변수 셋팅
 app.config.from_object(Config)
-
 # JWT 매니저 초기화
 jwt=JWTManager(app)
 
@@ -28,16 +27,13 @@ api = Api(app)
 
 # 경로와 리소스를 연결한다.
 api.add_resource(UserRegisterResource,'/user/register') # 회원가입
-# api.add_resource(KakaoRegisterResource,'/user/register') # 카카오 회원가입
 api.add_resource(UserLoginResource, '/user/login')      # 로그인
-api.add_resource(KakaoLoginResource, '/user/kakaoLogin')  # 카카오 유저 가입정보 확인
+api.add_resource(KakaoLoginResource, '/user/kakaoLogin')  # 카카오 로그인
 api.add_resource(UserLogoutResource, '/user/logout') # 로그아웃
-api.add_resource(UserInfoResource, '/user') #유저정보
-api.add_resource(UserLogoutResource, '/user/logout')
+api.add_resource(UserInfoResource, '/user') # 유저정보
 
-
-# def handler(event, context) :
-#     return serverless_wsgi.handle_request(app, event, context)
+def handler(event, context) :
+    return serverless_wsgi.handle_request(app, event, context)
 
 if __name__ == '__main__' :
     app.run()
