@@ -1,11 +1,15 @@
+import datetime
 from flask import request
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 from flask_restful import Resource
+from config import Config
 from mysql_connection import get_connection
 from mysql.connector import Error
 
 from email_validator import EmailNotValidError, validate_email
 from utils import check_password, hash_password
+
+import boto3
 
 # 회원가입
 class UserRegisterResource(Resource) :
@@ -316,20 +320,48 @@ class UserInfoResource(Resource) :
     @jwt_required()
     def put(self) :
 
-        data = request.get_json()
+        file = request.files.get('image')
+        nickName = request.form.get('nickName')
 
         userId = get_jwt_identity()
 
+        # 파일 처리
+        current_time = datetime.now()
+        new_file_name = current_time.isoformat().replace(':', '_') + str(userId) +'jpeg'
+
+        file.filename = new_file_name
+
+        s3 = boto3.client('s3',
+                          aws_access_key_id = Config.AWS_ACCESS_KEY,
+                          aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
+        
+        try:
+            s3.upload_fileobj(file, Config.S3_BUCKET,
+                              file.filename,
+                              ExtraArgs = {'ACL':'public-read',
+                                           'ContentType':'image/jpeg'})
+        except Exception as e:
+            print(e)
+            return {'error':str(e)}, 500
+
         try:
             connection = get_connection()
+
             query = '''update user
-                        set nickName = %s
+                        set imgUrl = %s
+                        nickName = %s
                         where userId = %s;'''
-            record = (data['nickName'], userId)
+            
+            imgUrl = Config.S3_LOCATION + file.filename
+
+            record = (imgUrl, nickName, userId)
 
             cursor = connection.cursor()
             cursor.execute(query, record)
             connection.commit()
+
+            cursor.close()
+            connection.close()
         
         except Error as e:
             print(e)
