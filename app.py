@@ -4,6 +4,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from config import Config
+from resources.posting import PostingListResouce, PostingResource
 from resources.user import KakaoLoginResource, UserInfoResource, UserLoginResource, UserLogoutResource, UserRegisterResource
 
 # 로그아웃 관련된 임포트문
@@ -31,6 +32,8 @@ api.add_resource(UserLoginResource, '/user/login')      # 로그인
 api.add_resource(KakaoLoginResource, '/user/kakaoLogin')  # 카카오 로그인
 api.add_resource(UserLogoutResource, '/user/logout') # 로그아웃
 api.add_resource(UserInfoResource, '/user') # 유저정보
+api.add_resource(PostingListResouce, '/posting') #포스팅 생성, 전체 포스팅 가져오기
+api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상세정보
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
