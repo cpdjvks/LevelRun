@@ -361,10 +361,13 @@ class UserInfoResource(Resource) :
 
         try :
             connection = get_connection()
-            query = '''select u.id, u.nickName, u.email, u.profileUrl, u.createdAt, l.level, l.exp, l.userId
+            query = '''select u.id, u.nickName, u.email, u.profileUrl, 
+                        u.createdAt, l.level, l.exp, l.userId, r.count
                     from user as u
                     join level as l
                     on u.id = l.userId
+                    join  randomBox as r
+                    on r.userId = u.id
                     order by l.level desc, l.exp desc, u.createdAt;'''
             
             cursor = connection.cursor(dictionary=True)
