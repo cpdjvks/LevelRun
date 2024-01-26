@@ -331,7 +331,7 @@ class UserInfoResource(Resource) :
             connection = get_connection()
 
             query = '''update user
-                        set profileUrl = %s
+                        set profileUrl = %s,
                         nickName = %s
                         where userId = %s;'''
             
