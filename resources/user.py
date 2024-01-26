@@ -1,5 +1,5 @@
 from flask import request
-from flask_jwt_extended import create_access_token, get_jwt, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 from flask_restful import Resource
 from mysql_connection import get_connection
 from mysql.connector import Error
@@ -167,6 +167,7 @@ class UserLoginResource(Resource) :
         access_token = create_access_token(result_list[0]['id'])
 
         return {"result" : "success", "accessToken" : access_token}, 200
+<<<<<<< Updated upstream
     
 
 # 카카오 가입 닉네임 중복 체크
@@ -296,8 +297,12 @@ class KakaoLoginResource(Resource) :
 
 # Class
 
+=======
+
+# 로그아웃
+>>>>>>> Stashed changes
 jwt_blocklist = set()
-class UserLogoutResource(Resource) :            # 로그아웃
+class UserLogoutResource(Resource) :           
     @jwt_required()
     def delete(self) :
         jti = get_jwt()['jti']          # 토큰안에 있는 jti 정보
@@ -307,5 +312,34 @@ class UserLogoutResource(Resource) :            # 로그아웃
         jwt_blocklist.add(jti)
 
         return {"result" : "success"}, 200
+
+# 유저정보
+class UserInfoResource(Resource) :
+    @jwt_required()
+    def put(self) :
+
+        data = request.get_json()
+
+        userId = get_jwt_identity()
+
+        try:
+            connection = get_connection()
+            query = '''update user
+                        set nickName = %s
+                        where userId = %s;'''
+            record = (data['nickName'], userId)
+
+            cursor = connection.cursor()
+            cursor.execute(query, record)
+            connection.commit()
+        
+        except Error as e:
+            print(e)
+            cursor.close()
+            connection.close()
+            return {'error':str(e)}, 500
+        
+        return {'result':'success'}, 200
+        
 
 
