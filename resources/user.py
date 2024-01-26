@@ -118,7 +118,7 @@ class UserRegisterResource(Resource) :
             cursor.close()
             connection.close()
 
-            return {"Error" : str(e)}, 500
+            return {"result" : str(e)}, 500
         
         # user 테이블의 id로 JWT 토큰을 만들어야 한다.
         access_token = create_access_token(userId)
@@ -385,6 +385,7 @@ class UserInfoResource(Resource) :
             connection.close()
 
             return {"result" : "success",
+                    "myId" : userId,
                     "items" : result_list,
                     "count" : len(result_list)}, 200
         
