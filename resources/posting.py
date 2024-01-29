@@ -84,7 +84,7 @@ class PostingListResouce(Resource) :
             query = '''select *
                         from posting
                         order by createdAt decs
-                        limit '''+str(offset)+''', '''+str(limit)+''';;'''
+                        limit '''+str(offset)+''', '''+str(limit)+''';'''
             
             record = (userId, )
             cursor = connection.cursor(dictionary=True)
