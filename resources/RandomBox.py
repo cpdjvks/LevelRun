@@ -8,7 +8,7 @@ from mysql_connection import get_connection
 
 
 class RandomBoxListResouce(Resource) :
-    # 포스팅 생성
+    # 상자 정보 가져오기
     @jwt_required()
     def get(self) :        
         userId = get_jwt_identity()
@@ -18,8 +18,7 @@ class RandomBoxListResouce(Resource) :
 
             query = '''select *
                         from location
-                        where userId = %s;
-                        '''
+                        where userId = %s and isComplete = 0;'''
             
             record = (userId,)
 
@@ -27,7 +26,7 @@ class RandomBoxListResouce(Resource) :
             cursor.execute(query, record)
             result_list = cursor.fetchall()
 
-
+            i = 0
             for row in result_list :
                result_list[i]['createdAt'] = row['createdAt'].isoformat()               
                i = i+1
