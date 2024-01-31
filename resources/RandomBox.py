@@ -47,11 +47,12 @@ class RandomBoxListResouce(Resource) :
             return {"result" : str(e)}, 500
     
 
-    # 상자 위치 정보 저장
-    @jwt_required()
-    def post(self) :
+    
         userId = get_jwt_identity()
         data = request.get_json()
+        print()
+        print(data)
+        print()
         
         try : 
             connection = get_connection()
