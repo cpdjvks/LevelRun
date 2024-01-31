@@ -52,18 +52,20 @@ class RandomBoxListResouce(Resource) :
     def post(self) :
         userId = get_jwt_identity()
         data = request.get_json()
+        
         try : 
             connection = get_connection()
+            for randomBox in data['randomBoxArrayList'] :
+                query = '''insert into location
+                        (lat, lng, userId)
+                        values
+                        (%s, %s, %s);'''
+            
+                record = (randomBox['boxLat'], randomBox['boxLng'], userId)
 
-            query = '''insert into location
-                    (lat, lng, userId)
-                    values
-                    (%s, %s, %s);'''
-        
-            record = (data['boxLat'], data['boxLng'], userId)
+                cursor = connection.cursor()
+                cursor.execute(query, record)
 
-            cursor = connection.cursor()
-            cursor.execute(query, record)
             connection.commit()
 
             cursor.close()
