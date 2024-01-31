@@ -158,6 +158,7 @@ class UserLoginResource(Resource) :
             connection.close()
 
             return {"result" : str(e)}, 500
+            return {"result" : str(e)}, 500        
 
         # 가입정보 확인
         if len(result_list) == 0 :
@@ -314,6 +315,7 @@ class UserInfoResource(Resource) :
         # 파일 처리
         current_time = datetime.now()
         new_file_name = current_time.isoformat().replace(':', '_') + str(userId) +'jpeg'
+
         file.filename = new_file_name
 
         s3 = boto3.client('s3',
@@ -356,8 +358,7 @@ class UserInfoResource(Resource) :
         
         return {'result':'success'}, 200    
 
-
-    # 유저 정보 가져오기
+    # 유저 정보가져오기
     @jwt_required()
     def get(self) :
         userId = get_jwt_identity()
@@ -401,7 +402,6 @@ class UserInfoResource(Resource) :
             connection.close()
 
             return {"result" : "fail"}, 500
-
 
 jwt_blocklist = set()
 class UserLogoutResource(Resource) :            # 로그아웃
