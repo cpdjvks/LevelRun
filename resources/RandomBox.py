@@ -45,3 +45,36 @@ class RandomBoxListResouce(Resource) :
             connection.close()
 
             return {"result" : str(e)}, 500
+    
+
+    # 상자 위치 정보 저장
+    @jwt_required()
+    def post(self) :
+        userId = get_jwt_identity()
+        data = request.get_json()
+        try : 
+            connection = get_connection()
+
+            query = '''insert into location
+                    (lat, lng, userId)
+                    values
+                    (%s, %s, %s);'''
+        
+            record = (data['boxLat'], data['boxLng'], userId)
+
+            cursor = connection.cursor()
+            cursor.execute(query, record)
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+
+            return {"result" : str(e)}, 500
+        
+        return {"result" : "success"}, 200
+

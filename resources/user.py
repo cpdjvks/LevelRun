@@ -154,7 +154,7 @@ class UserLoginResource(Resource) :
             cursor.close()
             connection.close()
 
-            return {"result" : str(e)}, 500        
+            return {"result" : str(e)}, 500
 
         # 가입정보 확인
         if len(result_list) == 0 :

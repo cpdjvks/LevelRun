@@ -34,11 +34,14 @@ api.add_resource(UserLoginResource, '/user/login')      # 로그인
 api.add_resource(KakaoLoginResource, '/user/kakaoLogin')  # 카카오 로그인
 api.add_resource(UserLogoutResource, '/user/logout') # 로그아웃
 api.add_resource(UserInfoResource, '/user') # 유저정보
+
 api.add_resource(PostingListResouce, '/posting') #포스팅 생성, 전체 포스팅 가져오기
 api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상세정보
+
 api.add_resource(RankerResource, '/ranker') # 상위 랭커 프로필 이미지
 api.add_resource(RankerListResource, '/rankerlist') # 랭킹 프레그먼트 리스트
-api.add_resource(RandomBoxListResouce, '/randomBox') # 랜덤상자 좌표 가져오기
+
+api.add_resource(RandomBoxListResouce, '/randomBox') # 랜덤상자 좌표 가져오기, 랜덤상자 위치 저장
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
