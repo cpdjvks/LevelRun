@@ -305,16 +305,21 @@ class UserInfoResource(Resource) :
     # 유저 정보 수정
     @jwt_required()
     def put(self) :
-        nickName = request.form.get('nickName')
         file = request.files.get('imgProfile')
+        nickName = request.form.get('nickName')
+
         userId = get_jwt_identity()
+
         # 파일 처리
         current_time = datetime.now()
         new_file_name = current_time.isoformat().replace(':', '_') + str(userId) +'jpeg'
+
         file.filename = new_file_name
+
         s3 = boto3.client('s3',
                           aws_access_key_id = Config.AWS_ACCESS_KEY,
                           aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
+        
         try:
             s3.upload_fileobj(file, Config.S3_BUCKET,
                               file.filename,
@@ -323,25 +328,33 @@ class UserInfoResource(Resource) :
         except Exception as e:
             print(e)
             return {'result':str(e)}, 500
+
         try:
             connection = get_connection()
+
             query = '''update user
                         set profileUrl = %s,
                         nickName = %s
                         where id = %s;'''
+            
             profileUrl = Config.S3_LOCATION + file.filename
+
             record = (profileUrl, nickName, userId)
+
             cursor = connection.cursor()
             cursor.execute(query, record)
             connection.commit()
+
             cursor.close()
             connection.close()
+        
         except Error as e:
             print(e)
             cursor.close()
             connection.close()
             return {'result':str(e)}, 500
-        return {'result':'success'}, 200
+        
+        return {'result':'success'}, 200    
 
     # 유저 정보가져오기
     @jwt_required()
