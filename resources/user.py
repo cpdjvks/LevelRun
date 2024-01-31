@@ -306,8 +306,8 @@ class UserInfoResource(Resource) :
     @jwt_required()
     def put(self) :
 
-        file = request.files.get('imgProfile')
         nickName = request.form.get('nickName')
+        file = request.files.get('imgProfile')
 
         userId = get_jwt_identity()
 
