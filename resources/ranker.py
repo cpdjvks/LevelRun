@@ -12,11 +12,12 @@ from mysql_connection import get_connection
 
 class RankerResource(Resource):
     # 상위 랭커 20명 프로필 이미지 가져오기
-    jwt_required()
+    @jwt_required()
     def get(self) :
+        
+        userId = get_jwt_identity()
+        
         try :
-            userId = get_jwt_identity()
-
             connection = get_connection()
             
             query = '''select u.id, u.nickname, u.profileUrl, l.level
@@ -24,7 +25,7 @@ class RankerResource(Resource):
                         join level l
                         on u.id = l.userId
                         order by l.level desc
-                        limit 20;'''
+                        limit 0, 20;'''
             
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query)
@@ -46,10 +47,13 @@ class RankerResource(Resource):
  
 class RankerListResource(Resource):
     # 랭킹 프래그먼트 리스트
-    jwt_required()
+    @jwt_required()
     def get(self):
+        
+        userId = get_jwt_identity()
+
         try:
-            userId = get_jwt_identity()
+            
             connection = get_connection()
 
             query = '''select row_number() over(order by level desc) as ranking, u.nickname, l.level, l.exp

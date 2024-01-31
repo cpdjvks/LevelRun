@@ -14,9 +14,9 @@ class PostingListResouce(Resource) :
     # 포스팅 생성
     @jwt_required()
     def post(self) :
+
         file = request.files.get('image')
         content = request.form.get('content')
-
         userId = get_jwt_identity()
 
         if file is None :
@@ -31,7 +31,7 @@ class PostingListResouce(Resource) :
                           aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
         
         try:
-            s3.uploadFileobj(file, Config.S3_BUCKET,
+            s3.upload_fileobj(file, Config.S3_BUCKET,
                              file.filename,
                              ExtraArgs = {'ACL':'public-read',
                                            'ContentType':'image/jpeg'})
@@ -70,32 +70,33 @@ class PostingListResouce(Resource) :
         
         return {"result" : "success"}, 200
     
-    # 모든 포스팅 가져오기
+
+    # 모든 포스팅 가져오기(최신순)
     @jwt_required()
     def get(self) :
-        try :
-            userId = get_jwt_identity()
+        
+        userId = get_jwt_identity()
+        offset = request.args.get('offset')
+        limit = request.args.get('limit')
 
-            offset = request.args.get('offset')
-            limit = request.args.get('limit')
+        try :
 
             connection = get_connection()
             
             query = '''select *
                         from posting
-                        order by createdAt decs
-                        limit '''+str(offset)+''', '''+str(limit)+''';'''
+                        order by createdAt desc
+                        limit '''+offset+''', '''+limit+''';'''
             
             record = (userId, )
             cursor = connection.cursor(dictionary=True)
-            cursor.execute(query, record)
+            cursor.execute(query)
             result_list = cursor.fetchall()
-
 
             i = 0
             for row in result_list :
-                result_list[i]['created_at'] = row['created_at'].isoformat()
-                result_list[i]['updated_at'] = row['updated_at'].isoformat()
+                result_list[i]['createdAt'] = row['createdAt'].isoformat()
+                result_list[i]['updatedAt'] = row['updatedAt'].isoformat()
                 i = i + 1
 
             cursor.close()

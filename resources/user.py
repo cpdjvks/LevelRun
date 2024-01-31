@@ -1,10 +1,13 @@
-import datetime
+from cgi import FieldStorage
+from datetime import datetime
+from fileinput import filename
 from flask import request
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 from flask_restful import Resource
 from config import Config
 from mysql_connection import get_connection
 from mysql.connector import Error
+from PIL import Image
 
 from email_validator import EmailNotValidError, validate_email
 from utils import check_password, hash_password
@@ -311,7 +314,6 @@ class UserInfoResource(Resource) :
         # 파일 처리
         current_time = datetime.now()
         new_file_name = current_time.isoformat().replace(':', '_') + str(userId) +'jpeg'
-
         file.filename = new_file_name
 
         s3 = boto3.client('s3',
@@ -333,7 +335,7 @@ class UserInfoResource(Resource) :
             query = '''update user
                         set profileUrl = %s,
                         nickName = %s
-                        where userId = %s;'''
+                        where id = %s;'''
             
             profileUrl = Config.S3_LOCATION + file.filename
 
@@ -354,7 +356,8 @@ class UserInfoResource(Resource) :
         
         return {'result':'success'}, 200    
 
-    # 유저 정보가져오기
+
+    # 유저 정보 가져오기
     @jwt_required()
     def get(self) :
         userId = get_jwt_identity()
@@ -398,6 +401,7 @@ class UserInfoResource(Resource) :
             connection.close()
 
             return {"result" : "fail"}, 500
+
 
 jwt_blocklist = set()
 class UserLogoutResource(Resource) :            # 로그아웃
