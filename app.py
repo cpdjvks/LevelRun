@@ -5,6 +5,7 @@ from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from config import Config
 from resources.RandomBox import RandomBoxListResouce
+from resources.gacha import GachaResouce
 from resources.posting import PostingListResouce, PostingResource
 from resources.ranker import RankerListResource, RankerResource
 from resources.user import KakaoLoginResource, UserInfoResource, UserLoginResource, UserLogoutResource, UserRegisterResource
@@ -42,6 +43,7 @@ api.add_resource(RankerResource, '/ranker') # 상위 랭커 프로필 이미지
 api.add_resource(RankerListResource, '/rankerlist') # 랭킹 프레그먼트 리스트
 
 api.add_resource(RandomBoxListResouce, '/randomBox') # 랜덤상자 좌표 가져오기
+api.add_resource(GachaResouce, '/gacha') # 상자 뽑기
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
