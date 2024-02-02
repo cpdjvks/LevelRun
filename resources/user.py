@@ -351,7 +351,7 @@ class UserInfoResource(Resource) :
         try :
             connection = get_connection()
             query = '''select u.id, u.nickName, u.email, u.profileUrl, 
-                        u.createdAt, l.level, l.exp, l.userId, r.count
+                        u.createdAt, l.level, l.exp, r.count as boxCount
                     from user as u
                     join level as l
                     on u.id = l.userId
@@ -363,23 +363,20 @@ class UserInfoResource(Resource) :
             cursor.execute(query,)
             result_list = cursor.fetchall()            
 
-            i = 0    
-            for row in result_list :
-               result_list[i]['createdAt'] = row['createdAt'].isoformat()               
-               i = i+1
-
-
-            print()
-            print(result_list)
-            print()
+            i = 0                
+            for row in result_list :            
+                if(userId == row['id']) :
+                    rank = i+1
+                    data = row
+                    data['createdAt'] = row['createdAt'].isoformat()
+                i = i+1
 
             cursor.close()
             connection.close()
 
             return {"result" : "success",
-                    "myId" : userId,
-                    "items" : result_list,
-                    "count" : len(result_list)}, 200
+                    "rank" : rank,
+                    "userInfo" : data}, 200
         
         except Error as e:
             print(e)
