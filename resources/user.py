@@ -28,7 +28,7 @@ class UserRegisterResource(Resource) :
             return {"result" : str(e)}, 400
 
         # 비밀번호 길이 검사
-        if len(data['password']) < 4 and len(data['password']) > 14 :
+        if len(data['password']) < 4 or len(data['password']) > 14 :
             return {"result" : "비밀번호 길이가 올바르지 않습니다."}, 400
 
         # 단방향 암호화된 비밀번호를 저장
@@ -48,7 +48,7 @@ class UserRegisterResource(Resource) :
             result_list = cursor.fetchall()
 
             if len(result_list) != 0 :
-                return {"result" : "중복된 닉네임이 존재 합니다."}, 400
+                return {"result" : "중복된 닉네임이 존재 합니다."}, 406
             
             #  이메일 중복 검사
             query = '''select *
@@ -61,7 +61,7 @@ class UserRegisterResource(Resource) :
             result_list = cursor.fetchall()
 
             if len(result_list) != 0 :
-                return {"result" : "중복된 이메일이 존재 합니다."}, 400
+                return {"result" : "중복된 이메일이 존재 합니다."}, 406
             
 
             # 중복검사 후 이상 없으면 회원가입 진행
@@ -176,7 +176,7 @@ class UserLoginResource(Resource) :
         return {"result" : "success", "accessToken" : access_token}, 200
     
 
-# 카카오 가입 닉네임 중복 체크
+# 카카오 로그인 닉네임 중복 체크
 class KakaoLoginResource(Resource) :
     def post(self) :
         data = request.get_json()
@@ -203,7 +203,7 @@ class KakaoLoginResource(Resource) :
                 if result_list[0]['password'] is not None :
                     cursor.close()
                     connection.close()
-                    return {"result" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 400
+                    return {"result" : "해당 이메일 주소로 가입된 정보가 있습니다."}, 406
             
                 # 카카오 유저 데이터 베이스에 정보가 있을 경우 로그인 진행 
                 else :
@@ -231,7 +231,7 @@ class KakaoLoginResource(Resource) :
             if len(result_list) != 0 :
                 cursor.close()
                 connection.close()
-                return {"result" : "중복된 닉네임이 존재 합니다."}, 400
+                return {"result" : "중복된 닉네임이 존재 합니다."}, 406
             
             
             # 회원가입
