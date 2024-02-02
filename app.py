@@ -42,7 +42,6 @@ api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상�
 api.add_resource(RankerResource, '/ranker') # 상위 랭커 프로필 이미지
 api.add_resource(RankerListResource, '/rankerlist') # 랭킹 프레그먼트 리스트
 
-api.add_resource(RandomBoxListResouce, '/randomBox') # 랜덤상자 좌표 가져오기
 api.add_resource(GachaResouce, '/gacha') # 상자 뽑기
 
 def handler(event, context) :
