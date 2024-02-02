@@ -22,6 +22,10 @@ class PostingListResouce(Resource) :
         if file is None :
             return {'error' : '이미지를 업로드 해주세요'}, 400
         
+        if content is None :
+            return {'error' : '내용을 입력해주세요'}, 400
+        
+        
         currentTime = datetime.now()
         newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
         file.filename = newFileName
