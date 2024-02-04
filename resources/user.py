@@ -300,7 +300,7 @@ class KakaoLoginResource(Resource) :
 
         return {"result" : "success", "accessToken" : access_token}, 200
 
-
+# 유저 정보 수정, 유저 정보가져오기
 class UserInfoResource(Resource) :
     # 유저 정보 수정
     @jwt_required()
@@ -371,12 +371,26 @@ class UserInfoResource(Resource) :
                     data['createdAt'] = row['createdAt'].isoformat()
                 i = i+1
 
+
+            query ='''select c.*, ch.imgUrl
+                    from collection as c
+                    join `character` as ch
+                    on c.characterId = ch.id
+                    where c.userId = %s;'''
+            record = (userId,)
+
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
+            i = 0                
+            for row in result_list :
+                result_list[i]['createdAt'] = row['createdAt'].isoformat()
+                i = i+1
+
+
             cursor.close()
             connection.close()
-
-            return {"result" : "success",
-                    "rank" : rank,
-                    "userInfo" : data}, 200
         
         except Error as e:
             print(e)
@@ -384,6 +398,19 @@ class UserInfoResource(Resource) :
             connection.close()
 
             return {"result" : "fail"}, 500
+        
+        
+        return {"result" : "success",
+                "id" : data['id'], 
+                "rank" : rank,
+                "nickName" : data['nickName'],
+                "email" : data['email'],
+                "profileUrl" : data['profileUrl'],
+                "level" : data['level'],
+                "exp" : data['exp'],
+                "boxCount" : data['boxCount'],
+                "createdAt" : data['createdAt'],
+                "items" : result_list}, 200
 
 jwt_blocklist = set()
 class UserLogoutResource(Resource) :            # 로그아웃
