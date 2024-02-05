@@ -43,7 +43,10 @@ class PostingListResouce(Resource) :
             print(e)
             return {'error' : str(e)}, 500
         
+        # rekognition 서비스 이용
+        tag_list = self.detect_labels(newFileName, Config.S3_BUCKET)
 
+        # 포스팅 저장
         try:
             connection = get_connection()
 
@@ -61,6 +64,45 @@ class PostingListResouce(Resource) :
 
             postingId = cursor.lastrowid
 
+            # 태그 저장
+            for tag in tag_list:
+                tag = tag.lower()
+                query = '''select *
+                            from tagName
+                            where name = %s;'''
+                record = (tag.lower(), )
+
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(query, record)
+
+                result_list = cursor.fetchall()
+
+                if len(result_list) != 0:
+                    tagNameId = result_list[0]['id']
+
+                else:
+                    query = '''insert into tagName
+                                (name)
+                                values
+                                (%s);'''
+            
+                    record = (tag, )
+
+                    cursor = connection.cursor()
+                    cursor.execute(query, record)
+
+                    tagNameId = cursor.lastrowid
+
+                query = '''insert into tag
+                            (postingId, tagNameId)
+                            values
+                            (%s, %s);'''
+  
+                record = (postingId, tagNameId)
+
+                cursor = connection.cursor()
+                cursor.execute(query, record)
+
             connection.commit()
 
             cursor.close()
@@ -73,6 +115,30 @@ class PostingListResouce(Resource) :
             return {'error' : str(e)}, 500
         
         return {"result" : "success"}, 200
+    
+
+    # 오토 태깅(rekognition)
+    def detect_labels(self, photo, bucket):
+
+        client = boto3.client('rekognition', 
+                              'ap-northeast-2', 
+                              aws_access_key_id = Config.AWS_ACCESS_KEY,
+                              aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
+
+
+        response = client.detect_labels(Image={'S3Object':{'Bucket':bucket,'Name':photo}},
+        MaxLabels=5, )
+
+        labels_list = []
+        for label in response['Labels']:
+            print("Label: " + label['Name'])
+            print("Confidence: " + str(label['Confidence']))
+                        
+            if label['Confidence'] >= 90 :
+                labels_list.append(label['Name'])
+        
+        return labels_list
+
     
 
     # 모든 포스팅 가져오기(최신순)
