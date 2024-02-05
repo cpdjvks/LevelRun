@@ -122,7 +122,7 @@ class PostingListResouce(Resource) :
 
         client = boto3.client('rekognition', 
                               'ap-northeast-2', 
-                              aws_access_key_id = Config.AWS_ACCESS_KEY,
+                              aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
                               aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
 
 
