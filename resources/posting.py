@@ -194,7 +194,8 @@ class PostingResource(Resource):
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
-            query = '''select p.id as postId, p.imgURL, p.content, 
+            query = '''select p.id as postId, rank() over(order by level desc) as ranking, 
+                                p.imgURL, p.content, 
                                 u.id as userId, u.email, p.createdAt, 
                                 count(l.id) as likeCnt, 
                                 if(l2.id is null, 0, 1) as isLike
@@ -206,6 +207,7 @@ class PostingResource(Resource):
                         left join `likes` l2
                         on p.id = l2.postingId and l2.likerId = %s
                         where p.id = %s;'''
+            
             record = (user_id, posting_id)
         
             cursor = connection.cursor(dictionary=True)

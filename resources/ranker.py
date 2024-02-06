@@ -20,7 +20,7 @@ class RankerResource(Resource):
         try :
             connection = get_connection()
             
-            query = '''select u.id, u.nickname, u.profileUrl, l.level
+            query = '''select u.id, rank() over(order by level desc) as ranking, u.nickname, u.profileUrl, l.level
                         from user u
                         join level l
                         on u.id = l.userId
@@ -56,7 +56,7 @@ class RankerListResource(Resource):
             
             connection = get_connection()
 
-            query = '''select row_number() over(order by level desc) as ranking, u.nickname, l.level, l.exp
+            query = '''select rank() over(order by level desc) as ranking, u.nickname, l.level, l.exp
                         from user u
                         join level l
                         on u.id = l.userId
