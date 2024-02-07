@@ -79,3 +79,44 @@ class RankerListResource(Resource):
         return {"result": "success", 
                 "items": result_list,
                 "count":len(result_list)}, 200
+    
+
+class RankingListResource(Resource):
+    # 유저들의 레벨정보를 가져온다.
+    @jwt_required()
+    def get(self):        
+        userId = get_jwt_identity()
+
+        try:            
+            connection = get_connection()
+
+            query = '''select u.nickName, l.*
+                        from user as u
+                        join level as l
+                        on u.id = l.userId
+                        order by l.level desc, l.exp desc, u.createdAt;'''
+
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query)
+            result_list = cursor.fetchall()
+
+            i = 0
+            rank = 0
+            for data in result_list :
+                if(userId == result_list[i]['userId']) :
+                    rank = i+1
+                i = i+1
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"result": "fail", "error": str(e)}, 500
+
+        return {"result": "success", 
+                "items": result_list,
+                "myRank" : rank,
+                "count":len(result_list)}, 200
