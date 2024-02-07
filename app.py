@@ -4,7 +4,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from config import Config
-from resources.RandomBox import RandomBoxListResouce
+from resources.RandomBox import RandomBoxListResouce, RandomBoxResouce
 from resources.gacha import GachaResouce
 from resources.like import LikeResource
 from resources.posting import PostingListResouce, PostingResource
@@ -43,6 +43,7 @@ api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상�
 api.add_resource(RankerResource, '/ranker') # 상위 랭커 프로필 이미지
 api.add_resource(RankerListResource, '/rankerlist') # 랭킹 프레그먼트 리스트
 
+api.add_resource(RandomBoxResouce, '/box') # 랜덤상자 추가
 api.add_resource(GachaResouce, '/gacha') # 상자 뽑기
 
 api.add_resource(LikeResource,'/like/<int:posting_id>') # 좋아요 처리
