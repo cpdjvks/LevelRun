@@ -193,23 +193,22 @@ class PostingResource(Resource):
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
-            query = '''select p.id as photoId, p.imgURL, p.content, p.createdAt, u.nickName, u.profileUrl, l3.level, 
-                        count(l1.id) as likesCnt, if(l2.id is null, 0, 1)as isLike, u2.nickName as likerNickname,
-                        rank() over(order by l3.level desc, l3.exp desc, u.createdAt desc) as ranking
+            query = '''select p.id as photoId, p.imgURL, p.content, p.createdAt, u.nickName, u.profileUrl, l2.level, 
+                        count(l.id) as likesCnt, if(l.id is null, 0, 1) as isLike, u.nickName as likerNickname,
+                        rank() over(order by l2.level desc, l2.exp desc, u.createdAt desc) as ranking, tn.*
                         from posting p
+                        join likes l
+                        on p.id = l.postingId and l.likerId = %s
+                        left join tag t
+                        on p.id = t.postingId
+                        left join tagName tn
+                        on t.tagNameId = tn.id
                         join user u
-                        on p.userId = u.id
-                        left join likes l1
-                        on p.id = l1.postingId
-                        left join likes l2
-                        on p.id = l2.postingId and l2.likerId = %s
-                        left join user u2
-                        on l1.likerId = u2.id
-                        left join level l3
-                        on u.id = l3.userId
+                        on u.id = l.likerId
+                        join level l2
+                        on u.id = l2.userId
                         where p.id = %s
-                        group by p.id
-                        order by l1.id desc, likesCnt desc;'''
+                        order by l.id desc;'''
             
             record = (user_id, posting_id)
         
