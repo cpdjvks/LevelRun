@@ -300,14 +300,16 @@ class KakaoLoginResource(Resource) :
 
         return {"result" : "success", "accessToken" : access_token}, 200
 
-# 유저 정보 수정, 유저 정보가져오기
+# 유저 정보 수정, 유저 정보 가져오기
 class UserInfoResource(Resource) :
     # 유저 정보 수정
     @jwt_required()
     def put(self) :
+
         nickName = request.form.get('nickName')
         file = request.files.get('imgProfile')
         userId = get_jwt_identity()
+
         # 파일 처리
         current_time = datetime.now()
         new_file_name = current_time.isoformat().replace(':', '_') + str(userId) +'jpeg'
@@ -323,8 +325,27 @@ class UserInfoResource(Resource) :
         except Exception as e:
             print(e)
             return {'result':str(e)}, 500
+    
+
         try:
             connection = get_connection()
+
+            # 닉네임 중복 체크
+            query = '''select id, nickName, email, password
+                    from user
+                    where nickName = %s;'''
+            
+            record = (nickName,)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
+            if len(result_list) != 0 :
+                cursor.close()
+                connection.close()
+                return {"result" : "중복된 닉네임이 존재 합니다."}, 406
+
+            # 유저정보 업데이트
             query = '''update user
                         set profileUrl = %s,
                         nickName = %s

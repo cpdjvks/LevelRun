@@ -140,7 +140,6 @@ class PostingListResouce(Resource) :
         return labels_list
 
     
-
     # 모든 포스팅 가져오기(최신순)
     @jwt_required()
     def get(self) :
@@ -194,19 +193,23 @@ class PostingResource(Resource):
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
-            query = '''select p.id as postId, rank() over(order by level desc) as ranking, 
-                                p.imgURL, p.content, 
-                                u.id as userId, u.email, p.createdAt, 
-                                count(l.id) as likeCnt, 
-                                if(l2.id is null, 0, 1) as isLike
+            query = '''select p.id as photoId, p.imgURL, p.content, p.createdAt, u.nickName, u.profileUrl, l3.level, 
+                        count(l1.id) as likesCnt, if(l2.id is null, 0, 1)as isLike, u2.nickName as likerNickname,
+                        rank() over(order by l3.level desc, l3.exp desc, u.createdAt desc) as ranking
                         from posting p
                         join user u
                         on p.userId = u.id
-                        left join `likes` l
-                        on p.id = l.postingId
-                        left join `likes` l2
+                        left join likes l1
+                        on p.id = l1.postingId
+                        left join likes l2
                         on p.id = l2.postingId and l2.likerId = %s
-                        where p.id = %s;'''
+                        left join user u2
+                        on l1.likerId = u2.id
+                        left join level l3
+                        on u.id = l3.userId
+                        where p.id = %s
+                        group by p.id
+                        order by l1.id desc, likesCnt desc;'''
             
             record = (user_id, posting_id)
         
@@ -260,3 +263,45 @@ class PostingResource(Resource):
                 "tag":tag}, 200
         
 
+class PostingPopResource(Resource):
+    # 포스팅 인기순 정렬
+    @jwt_required()
+    def get(self):
+        userId = get_jwt_identity()
+        offset = request.args.get('offset')
+        limit = request.args.get('limit')
+
+        try :
+
+            connection = get_connection()
+            
+            query = '''select *, count(l.id) as LikersCnt
+                        from posting p
+                        left join likes l
+                        on p.id = l.postingId
+                        group by p.id
+                        limit '''+offset+''', '''+limit+''';'''
+            
+            record = (userId, )
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query)
+            result_list = cursor.fetchall()
+
+            i = 0
+            for row in result_list :
+                result_list[i]['createdAt'] = row['createdAt'].isoformat()
+                result_list[i]['updatedAt'] = row['updatedAt'].isoformat()
+                i = i + 1
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"result": "fail", "error": str(e)}, 500
+
+        return {"result": "success", 
+                "items": result_list,
+                "count":len(result_list)}, 200
