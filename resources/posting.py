@@ -193,22 +193,23 @@ class PostingResource(Resource):
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
-            query = '''select p.id as photoId, p.imgURL, p.content, p.createdAt, u.nickName, u.profileUrl, l2.level, 
-                        count(l.id) as likesCnt, if(l.id is null, 0, 1) as isLike, u.nickName as likerNickname,
-                        rank() over(order by l2.level desc, l2.exp desc, u.createdAt desc) as ranking, tn.*
+            query = '''select p.id as photoId, p.imgURL, p.content, p.createdAt, u.nickName, u.profileUrl, l3.level, 
+                        count(l1.id) as likesCnt, if(l2.id is null, 0, 1)as isLike, u2.nickName as likerNickname,
+                        rank() over(order by l3.level desc, l3.exp desc, u.createdAt desc) as ranking
                         from posting p
-                        join likes l
-                        on p.id = l.postingId and l.likerId = %s
-                        left join tag t
-                        on p.id = t.postingId
-                        left join tagName tn
-                        on t.tagNameId = tn.id
                         join user u
-                        on u.id = l.likerId
-                        join level l2
-                        on u.id = l2.userId
-                        where p.id = %s
-                        order by l.id desc;'''
+                        on p.userId = u.id
+                        left join likes l1
+                        on p.id = l1.postingId
+                        left join likes l2
+                        on p.id = l2.postingId and l2.likerId = 34
+                        left join user u2
+                        on l1.likerId = u2.id
+                        left join level l3
+                        on u.id = l3.userId
+                        where p.id = 3
+                        group by p.id
+                        order by l1.id desc;'''
             
             record = (user_id, posting_id)
         
@@ -260,6 +261,109 @@ class PostingResource(Resource):
         return {"result":"success",
                 "post":post,
                 "tag":tag}, 200
+    
+    # 포스팅 수정
+    @jwt_required()
+    def put(self, postingId):
+
+        file = request.files.get('image')
+        content = request.form.get('content')
+        tag_list = request.form.get('tag')
+
+        userId = get_jwt_identity()
+
+        if file is None :
+            return {'error' : '이미지를 업로드 해주세요'}, 400
+        
+        if content is None :
+            return {'error' : '내용을 입력해주세요'}, 400
+        
+        currentTime = datetime.now()
+        newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
+        file.filename = newFileName
+
+        s3 = boto3.client('s3',
+                          aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
+                          aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
+        
+        try:
+            s3.upload_fileobj(file, Config.S3_BUCKET,
+                             file.filename,
+                             ExtraArgs = {'ACL':'public-read',
+                                           'ContentType':'image/jpeg'})
+        except Exception as e:
+            print(e)
+            return {'error' : str(e)}, 500
+        
+
+        try:
+            connection = get_connection()
+            query = '''update posting
+                        set imgURl = %s,
+                        content = %s 
+                        where id = %s and userId = %s;'''
+            
+            imgURL = Config.S3_LOCATION + file.filename
+
+            record = (imgURL, content, postingId, userId)
+            
+            cursor = connection.cursor()
+            cursor.execute(query, record)
+
+            # 태그 수정
+            for tag in tag_list:
+                tag = tag.lower().trim().split("#").replace("#", "")
+                query = '''select *
+                            from tagName
+                            where name = %s;'''
+                record = (tag, )
+
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(query, record)
+
+                result_list = cursor.fetchall()
+
+                if len(result_list) != 0:
+                    tagNameId = result_list[0]['id']
+
+                else:
+                    query = '''insert into tagName
+                                (name)
+                                values
+                                (%s);'''
+            
+                    record = (tag, )
+
+                    cursor = connection.cursor()
+                    cursor.execute(query, record)
+
+                    tagNameId = cursor.lastrowid
+
+                query = '''update tag
+                            set tagNameId = %s
+                            where postingId = %s;'''
+  
+                record = (tagNameId, postingId)
+
+                cursor = connection.cursor()
+                cursor.execute(query, record)
+            postingId = cursor.lastrowid
+
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+        except Error as e:
+            print(e)
+            cursor.close()
+            connection.close()
+            return {'error':str(e)}, 500
+        
+        return {'result':'success'}, 200
+    
+
+
         
 
 class PostingPopResource(Resource):
@@ -274,11 +378,12 @@ class PostingPopResource(Resource):
 
             connection = get_connection()
             
-            query = '''select *, count(l.id) as LikersCnt
+            query = '''select *, count(l.id) as likersCnt
                         from posting p
                         left join likes l
                         on p.id = l.postingId
                         group by p.id
+                        order by likersCnt desc
                         limit '''+offset+''', '''+limit+''';'''
             
             record = (userId, )
@@ -304,3 +409,4 @@ class PostingPopResource(Resource):
         return {"result": "success", 
                 "items": result_list,
                 "count":len(result_list)}, 200
+

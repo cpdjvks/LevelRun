@@ -39,7 +39,7 @@ api.add_resource(UserLogoutResource, '/user/logout') # 로그아웃
 api.add_resource(UserInfoResource, '/user') # 유저정보
 
 api.add_resource(PostingListResouce, '/posting') #포스팅 생성, 전체 포스팅 가져오기
-api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상세정보
+api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상세정보, 수정, 삭제
 api.add_resource(PostingPopResource, '/posting/popularity') # 포스팅 인기순 정렬
 
 api.add_resource(RankerResource, '/ranker') # 상위 랭커 프로필 이미지
