@@ -14,7 +14,6 @@ class PostingListResouce(Resource) :
     # 포스팅 생성
     @jwt_required()
     def post(self) :
-
         file = request.files.get('image')
         content = request.form.get('content')
         userId = get_jwt_identity()
@@ -115,31 +114,7 @@ class PostingListResouce(Resource) :
             return {'error' : str(e)}, 500
         
         return {"result" : "success"}, 200
-    
-
-    # 오토 태깅(rekognition)
-    def detect_labels(self, photo, bucket):
-
-        client = boto3.client('rekognition', 
-                              'ap-northeast-2', 
-                              aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
-                              aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
-
-
-        response = client.detect_labels(Image={'S3Object':{'Bucket':bucket,'Name':photo}},
-        MaxLabels=5, )
-
-        labels_list = []
-        for label in response['Labels']:
-            print("Label: " + label['Name'])
-            print("Confidence: " + str(label['Confidence']))
-                        
-            if label['Confidence'] >= 90 :
-                labels_list.append(label['Name'])
-        
-        return labels_list
-
-    
+ 
     # 모든 포스팅 가져오기(최신순)
     @jwt_required()
     def get(self) :
@@ -180,7 +155,62 @@ class PostingListResouce(Resource) :
         return {"result": "success", 
                 "items": result_list,
                 "count":len(result_list)}, 200
-            
+
+
+class PostingLabelResouce(Resource) :
+    # 라벨 생성
+    @jwt_required()
+    def post(self) :
+        file = request.files.get('image')
+        content = request.form.get('content')
+        userId = get_jwt_identity()
+
+        currentTime = datetime.now()
+        newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
+        file.filename = newFileName
+
+        s3 = boto3.client('s3',
+                          aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
+                          aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
+        
+        try:
+            s3.upload_fileobj(file, Config.S3_BUCKET,
+                             file.filename,
+                             ExtraArgs = {'ACL':'public-read',
+                                           'ContentType':'image/jpeg'})
+        except Exception as e:
+            print(e)
+            return {'error' : str(e)}, 500
+        
+        # rekognition 서비스 이용
+        tag_list = self.detect_labels(newFileName, Config.S3_BUCKET)
+
+        
+        return {"result" : "success",
+                "tagList" : tag_list,
+                "fileUrl" : newFileName}, 200
+
+    # 오토 태깅(rekognition)
+    def detect_labels(self, photo, bucket):
+
+        client = boto3.client('rekognition', 
+                              'ap-northeast-2', 
+                              aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
+                              aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
+
+
+        response = client.detect_labels(Image={'S3Object':{'Bucket':bucket,'Name':photo}},
+        MaxLabels=5, )
+
+        labels_list = []
+        for label in response['Labels']:
+            print("Label: " + label['Name'])
+            print("Confidence: " + str(label['Confidence']))
+                        
+            if label['Confidence'] >= 90 :
+                labels_list.append(label['Name'])
+        
+        return labels_list    
         
 class PostingResource(Resource):
     # 포스팅 상세 보기
@@ -361,10 +391,7 @@ class PostingResource(Resource):
             return {'error':str(e)}, 500
         
         return {'result':'success'}, 200
-    
-
-
-        
+            
 
 class PostingPopResource(Resource):
     # 포스팅 인기순 정렬

@@ -8,7 +8,7 @@ from resources.RandomBox import RandomBoxListResouce, RandomBoxResouce
 from resources.gacha import GachaResource
 
 from resources.like import LikeResource
-from resources.posting import PostingListResouce, PostingPopResource, PostingResource
+from resources.posting import PostingLabelResouce, PostingListResouce, PostingPopResource, PostingResource
 from resources.ranker import RankerResource, RankingListResource
 from resources.user import KakaoLoginResource, UserInfoResource, UserLoginResource, UserLogoutResource, UserRegisterResource
 
@@ -38,7 +38,8 @@ api.add_resource(KakaoLoginResource, '/user/kakaoLogin')  # 카카오 로그인
 api.add_resource(UserLogoutResource, '/user/logout') # 로그아웃
 api.add_resource(UserInfoResource, '/user') # 유저정보
 
-api.add_resource(PostingListResouce, '/posting') #포스팅 생성, 전체 포스팅 가져오기
+api.add_resource(PostingListResouce, '/posting') # 포스팅 생성, 전체 포스팅 가져오기
+api.add_resource(PostingLabelResouce, '/posting/label') # 포스팅 라벨 생성
 api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상세정보, 수정, 삭제
 api.add_resource(PostingPopResource, '/posting/popularity') # 포스팅 인기순 정렬
 
