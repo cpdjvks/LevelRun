@@ -5,6 +5,10 @@ from flask_restful import Resource
 from mysql.connector import Error
 
 import boto3
+import sys
+import urllib.request
+
+import requests
 
 from config import Config
 from mysql_connection import get_connection
@@ -160,14 +164,16 @@ class PostingListResouce(Resource) :
 class PostingLabelResouce(Resource) :
     # 라벨 생성
     @jwt_required()
-    def post(self) :
+    def post(self) :        
+        source_language = "en"
+        target_language = "ko"
         file = request.files.get('image')
         content = request.form.get('content')
         userId = get_jwt_identity()
 
         currentTime = datetime.now()
         newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
-        file.filename = newFileName
+        file.filename = newFileName        
 
         s3 = boto3.client('s3',
                           aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
@@ -181,10 +187,18 @@ class PostingLabelResouce(Resource) :
         except Exception as e:
             print(e)
             return {'error' : str(e)}, 500
-        
+                
         # rekognition 서비스 이용
         tag_list = self.detect_labels(newFileName, Config.S3_BUCKET)
 
+        newFileName = Config.S3_LOCATION + newFileName
+        
+        i = 0
+        for row in tag_list :
+            text_to_translate = row
+            tag_list[i] = self.translate_text(text_to_translate, source_language, target_language)
+            i = i+1
+            
         
         return {"result" : "success",
                 "tagList" : tag_list,
@@ -211,6 +225,28 @@ class PostingLabelResouce(Resource) :
                 labels_list.append(label['Name'])
         
         return labels_list    
+
+    # 태깅 번역
+    def translate_text(self, text, source_lang, target_lang):
+        url = "https://openapi.naver.com/v1/papago/n2mt"
+        headers = {
+            "X-Naver-Client-Id": Config.X_NAVER_CLIENT_ID,
+            "X-Naver-Client-Secret": Config.X_NAVER_CLIENT_SECRET
+        }
+        data = {
+            "source": source_lang,
+            "target": target_lang,
+            "text": text
+        }
+
+        response = requests.post(url, headers=headers, data=data)
+        
+        if response.status_code == 200:
+            translated_text = response.json()["message"]["result"]["translatedText"]
+            return translated_text
+        else:
+            return "번역에 실패했습니다. 상태 코드: {}".format(response.status_code)
+        
         
 class PostingResource(Resource):
     # 포스팅 상세 보기
