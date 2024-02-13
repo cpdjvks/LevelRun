@@ -167,9 +167,12 @@ class PostingLabelResouce(Resource) :
     def post(self) :        
         source_language = "en"
         target_language = "ko"
-        file = request.files.get('image')
-        content = request.form.get('content')
+
+        file = request.files.get('image')        
         userId = get_jwt_identity()
+
+        if file is None :
+            return {'error' : '이미지를 업로드 해주세요'}, 400
 
         currentTime = datetime.now()
         newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
