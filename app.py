@@ -4,7 +4,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from config import Config
-from resources.RandomBox import RandomBoxListResouce, RandomBoxResouce
+from resources.RandomBox import RandomBoxResouce
 from resources.gacha import GachaResource
 
 from resources.like import LikeResource
