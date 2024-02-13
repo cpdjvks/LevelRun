@@ -284,7 +284,7 @@ class PostingLabelResouce(Resource) :
 class PostingResource(Resource):
     # 포스팅 상세 보기
     @jwt_required()
-    def get(self, posting_id):
+    def get(self, postingId):
 
         user_id = get_jwt_identity()
 
@@ -310,7 +310,7 @@ class PostingResource(Resource):
                         group by p.id
                         order by l1.id desc;'''
             
-            record = (user_id, posting_id)
+            record = (user_id, postingId)
         
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
@@ -331,7 +331,7 @@ class PostingResource(Resource):
                         on t.tagNameId = tn.id
                         where postingId = %s;'''
             
-            record = (posting_id, )
+            record = (postingId, )
 
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
@@ -460,7 +460,35 @@ class PostingResource(Resource):
             return {'error':str(e)}, 500
         
         return {'result':'success'}, 200
-            
+
+    # 포스팅 삭제
+    @jwt_required()
+    def delete(self, postingId):
+        
+        userId = get_jwt_identity()
+
+        try :
+            connection = get_connection()
+            query = '''delete from posting
+                        where id = %s and userId = %s;'''
+            record = (postingId, userId)
+
+            cursor = connection.cursor()
+            cursor.execute(query, record)
+
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+        except Error as e:
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"error":str(e)}, 500
+
+        return {"result":"success"}, 200
+      
 
 class PostingPopResource(Resource):
     # 포스팅 인기순 정렬

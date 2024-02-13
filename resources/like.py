@@ -11,7 +11,7 @@ from mysql.connector import Error
 class LikeResource(Resource):
     # 좋아요 처리
     @jwt_required()
-    def post(self, posting_id):
+    def post(self, postingId):
 
         user_id = get_jwt_identity()
 
@@ -42,7 +42,7 @@ class LikeResource(Resource):
 
     # 좋아요 취소
     @jwt_required()
-    def delete(self, posting_id):
+    def delete(self, postingId):
         
         user_id = get_jwt_identity()
 

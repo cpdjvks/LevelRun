@@ -40,7 +40,7 @@ api.add_resource(UserInfoResource, '/user') # 유저정보
 
 api.add_resource(PostingListResouce, '/posting') # 포스팅 생성, 전체 포스팅 가져오기
 api.add_resource(PostingLabelResouce, '/posting/label') # 포스팅 라벨 생성
-api.add_resource(PostingResource, '/posting/<int:posting_id>') # 포스팅 상세정보, 수정, 삭제
+api.add_resource(PostingResource, '/posting/<int:postingId>') # 포스팅 상세정보, 수정, 삭제
 api.add_resource(PostingPopResource, '/posting/popularity') # 포스팅 인기순 정렬
 
 api.add_resource(RankerResource, '/ranker') # 상위 랭커 프로필 이미지
@@ -49,7 +49,7 @@ api.add_resource(RankingListResource, '/rankingList') # 유저들의 레벨정�
 api.add_resource(RandomBoxResouce, '/box') # 랜덤상자 추가
 api.add_resource(GachaResource, '/gacha') # 상자 뽑기
 
-api.add_resource(LikeResource,'/like/<int:posting_id>') # 좋아요 처리
+api.add_resource(LikeResource,'/like/<int:postingId>') # 좋아요 처리
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
