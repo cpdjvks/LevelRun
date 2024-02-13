@@ -18,36 +18,15 @@ class PostingListResouce(Resource) :
     # 포스팅 생성
     @jwt_required()
     def post(self) :
-        file = request.files.get('image')
-        content = request.form.get('content')
+        data = request.get_json()
         userId = get_jwt_identity()
 
-        if file is None :
+        if data['imgURL'] == "" :
             return {'error' : '이미지를 업로드 해주세요'}, 400
         
-        if content is None :
+        if data['content'] == "" :
             return {'error' : '내용을 입력해주세요'}, 400
         
-        
-        currentTime = datetime.now()
-        newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
-        file.filename = newFileName
-
-        s3 = boto3.client('s3',
-                          aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
-                          aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
-        
-        try:
-            s3.upload_fileobj(file, Config.S3_BUCKET,
-                             file.filename,
-                             ExtraArgs = {'ACL':'public-read',
-                                           'ContentType':'image/jpeg'})
-        except Exception as e:
-            print(e)
-            return {'error' : str(e)}, 500
-        
-        # rekognition 서비스 이용
-        tag_list = self.detect_labels(newFileName, Config.S3_BUCKET)
 
         # 포스팅 저장
         try:
@@ -56,24 +35,29 @@ class PostingListResouce(Resource) :
             query = '''insert into posting
                         (userId, imgUrl, content)
                         values
-                        (%s, %s, %s);'''
+                        (%s, %s, %s);'''            
 
-            imgURL = Config.S3_LOCATION + file.filename
-
-            record = (userId, imgURL, content)
+            record = (userId, data['imgURL'], data['content'])
 
             cursor = connection.cursor()
             cursor.execute(query, record)
 
             postingId = cursor.lastrowid
 
-            # 태그 저장
-            for tag in tag_list:
+            str_tags = data['tags']
+            contain = ","
+
+            # 태그가 하나일 때 저장
+            if contain not in str_tags :
+                tag = data['tags']
+
                 tag = tag.lower()
+
                 query = '''select *
                             from tagName
                             where name = %s;'''
-                record = (tag.lower(), )
+                
+                record = (tag, )
 
                 cursor = connection.cursor(dictionary=True)
                 cursor.execute(query, record)
@@ -105,6 +89,52 @@ class PostingListResouce(Resource) :
 
                 cursor = connection.cursor()
                 cursor.execute(query, record)
+
+            # 태그가 여러개일 때 저장
+            else :
+                tag_list = data['tags'].split(",")
+
+                for tag in tag_list:                
+                    tag = tag.lower()
+
+                    query = '''select *
+                                from tagName
+                                where name = %s;'''
+                    
+                    record = (tag, )
+
+                    cursor = connection.cursor(dictionary=True)
+                    cursor.execute(query, record)
+
+                    result_list = cursor.fetchall()
+
+                    if len(result_list) != 0:
+                        tagNameId = result_list[0]['id']
+
+                    else:
+                        query = '''insert into tagName
+                                    (name)
+                                    values
+                                    (%s);'''
+                
+                        record = (tag, )
+
+                        cursor = connection.cursor()
+                        cursor.execute(query, record)
+
+                        tagNameId = cursor.lastrowid
+
+                    query = '''insert into tag
+                                (postingId, tagNameId)
+                                values
+                                (%s, %s);'''
+    
+                    record = (postingId, tagNameId)
+
+                    cursor = connection.cursor()
+                    cursor.execute(query, record)
+
+            
 
             connection.commit()
 
