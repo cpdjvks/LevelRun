@@ -336,9 +336,15 @@ class PostingResource(Resource):
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
 
-            liker_list = cursor.fetchall()
+            result_list = cursor.fetchall()
             
-            result['likerList'] = liker_list['nickName']
+            liker_list = []
+            for row in result_list : 
+                liker_list.append(row['nickName'])
+
+            print(liker_list)
+
+            result['likerList'] = liker_list
 
             cursor.close()
             connection.close()
