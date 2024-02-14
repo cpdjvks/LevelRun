@@ -285,64 +285,60 @@ class PostingResource(Resource):
     # 포스팅 상세 보기
     @jwt_required()
     def get(self, postingId):
-
         user_id = get_jwt_identity()
 
         try:
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
-            query = '''select p.id as photoId, p.imgURL, p.content, p.createdAt, u.nickName, u.profileUrl, l3.level, 
-                        count(l1.id) as likesCnt, if(l2.id is null, 0, 1)as isLike, u2.nickName as likerNickname,
-                        rank() over(order by l3.level desc, l3.exp desc, u.createdAt desc) as ranking
-                        from posting p
-                        join user u
-                        on p.userId = u.id
-                        left join likes l1
-                        on p.id = l1.postingId
-                        left join likes l2
-                        on p.id = l2.postingId and l2.likerId = %s
-                        left join user u2
-                        on l1.likerId = u2.id
-                        left join level l3
-                        on u.id = l3.userId
-                        where p.id = %s
-                        group by p.id
-                        order by l1.id desc;'''
+            query = '''select p.id as postingId, u.profileUrl, 
+                                u.nickName, l.level, p.imgURL as postingUrl, 
+                                t2.name, p.content, p.createdAt
+                        from posting as p
+                        join user as u
+                        on p.userId = u.id and p.id = %s
+                        join level as l
+                        on u.id = l.userId
+                        left join tag as t
+                        on t.postingId = p.id
+                        join tagName as t2
+                        on t2.id = t.tagNameId;'''
             
-            record = (user_id, postingId)
+            record = (postingId,)
         
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
 
             result_list = cursor.fetchall()
+            
+            tag_list = []
 
-            if len(result_list) == 0 :
-                return {"error":"데이터가 없습니다."}, 400 
+            for row in result_list :
+                tag_list.append(row['content'])
             
 
-            post = result_list[0]
-
+            result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
+            result = result_list[0]
+            
 
             # 포스팅 상세정보 태그 정보 쿼리
-            query = '''select concat('#', tn.name) as tag
-                        from tag t
-                        join tagName tn
-                        on t.tagNameId = tn.id
-                        where postingId = %s;'''
+            query = '''select u.nickName
+                        from posting as p
+                        join likes as l
+                        on p.id = l.postingId
+                        join user as u
+                        on u.id = l.likerId
+                        where p.id = %s
+                        order by l.id;'''
             
             record = (postingId, )
 
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
 
-            result_list = cursor.fetchall()
-
-            print(result_list)
-
-            tag = [] # 빈 리스트 만들기
-            for tag_dict in result_list:
-                tag.append(tag_dict['tag'])
+            liker_list = cursor.fetchall()
+            
+            result['likerList'] = liker_list
 
             cursor.close()
             connection.close()
@@ -351,15 +347,11 @@ class PostingResource(Resource):
             print(e)
             cursor.close()
             connection.close()
-            return {"error":str(e)}, 500
+            return {"error":str(e)}, 500        
         
-        
-        post['createdAt'] = post['createdAt'].isoformat()
-        
-        
-        return {"result":"success",
-                "post":post,
-                "tag":tag}, 200
+        return {"result" : "success",
+                "item" : result,
+                "tagList" : tag_list}, 200
     
     # 포스팅 수정
     @jwt_required()
@@ -410,8 +402,9 @@ class PostingResource(Resource):
             cursor.execute(query, record)
 
             # 태그 수정
+            tag_list = ''.join(tag_list).split()
             for tag in tag_list:
-                tag = tag.lower().trim().split("#").replace("#", "")
+                tag = tag.strip().lower().replace("#", "")
                 query = '''select *
                             from tagName
                             where name = %s;'''
