@@ -12,21 +12,43 @@ class LikeResource(Resource):
     # 좋아요 처리
     @jwt_required()
     def post(self, postingId):
-
         user_id = get_jwt_identity()
 
         try :
             connection = get_connection()
-            query = '''insert into `likes`
+
+            query = '''select *
+                        from likes
+                        where likerId = %s and postingId = %s;'''
+            
+            record = (user_id, postingId)
+            cursor = connection.cursor(dictionary=True)
+
+            cursor.execute(query, record)
+            result = cursor.fetchall()
+
+            # 좋아요 처리
+            if len(result) == 0 :
+                query = '''insert into `likes`
                         (likerId, postingId)
                         values
                         (%s, %s);'''
-            record = (user_id, posting_id)
-        
-            cursor = connection.cursor()
-            cursor.execute(query, record)
-            connection.commit()
+                record = (user_id, postingId)
+            
+                cursor = connection.cursor()
+                cursor.execute(query, record)                
 
+            # 좋아요 해제
+            else :
+                query = '''delete from likes
+                            where likerId = %s and postingId = %s;'''
+                
+                record = (user_id, postingId)            
+                cursor = connection.cursor()
+                cursor.execute(query, record)                
+            
+            
+            connection.commit()
             cursor.close()
             connection.close()
 
@@ -38,34 +60,4 @@ class LikeResource(Resource):
 
 
         return {"result":"success"}, 200
-    
-
-    # 좋아요 취소
-    @jwt_required()
-    def delete(self, postingId):
-        
-        user_id = get_jwt_identity()
-
-        try :
-            connection = get_connection()
-            query = '''delete from `likes`
-                        where likerId = %s and postingId = %s;'''  
-            record = (user_id, posting_id)
-        
-            cursor = connection.cursor()
-            cursor.execute(query, record)
-            connection.commit()
-
-            cursor.close()
-            connection.close()
-
-        except Error as e :
-            print(e)
-            cursor.close()
-            connection.close()
-            return {"error":str(e)}, 500
-
-
-        return {"result":"success"}, 200
-    
     
