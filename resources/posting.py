@@ -338,7 +338,7 @@ class PostingResource(Resource):
 
             liker_list = cursor.fetchall()
             
-            result['likerList'] = liker_list
+            result['likerList'] = liker_list['nickName']
 
             cursor.close()
             connection.close()
