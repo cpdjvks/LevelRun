@@ -301,12 +301,12 @@ class PostingResource(Resource):
                         left join likes l1
                         on p.id = l1.postingId
                         left join likes l2
-                        on p.id = l2.postingId and l2.likerId = 34
+                        on p.id = l2.postingId and l2.likerId = %s
                         left join user u2
                         on l1.likerId = u2.id
                         left join level l3
                         on u.id = l3.userId
-                        where p.id = 3
+                        where p.id = %s
                         group by p.id
                         order by l1.id desc;'''
             
