@@ -316,10 +316,10 @@ class PostingResource(Resource):
             for row in result_list :
                 tag_list.append(row['tagName'])
             
-
+            
             result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
             result = result_list[0]
-            
+            del result['tagName']
 
             # 포스팅 상세정보 태그 정보 쿼리
             query = '''select u.nickName
