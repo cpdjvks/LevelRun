@@ -293,7 +293,7 @@ class PostingResource(Resource):
             # 포스팅 상세정보 쿼리
             query = '''select p.id as postingId, u.profileUrl, 
                                 u.nickName, l.level, p.imgURL as postingUrl, 
-                                t2.name, p.content, p.createdAt
+                                t2.name as tagName, p.content, p.createdAt
                         from posting as p
                         join user as u
                         on p.userId = u.id and p.id = %s
@@ -314,7 +314,7 @@ class PostingResource(Resource):
             tag_list = []
 
             for row in result_list :
-                tag_list.append(row['content'])
+                tag_list.append(row['tagName'])
             
 
             result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
