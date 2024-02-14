@@ -316,6 +316,8 @@ class PostingResource(Resource):
             for row in result_list :
                 tag_list.append(row['tagName'])
             
+            if len(result_list) == 0 :
+                return {"Result" : "존재하지 않는 포스팅입니다."}, 400
             
             result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
             result = result_list[0]

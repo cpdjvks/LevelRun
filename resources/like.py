@@ -61,3 +61,38 @@ class LikeResource(Resource):
 
         return {"result":"success"}, 200
     
+    # 좋아요 유무 확인
+    @jwt_required()
+    def get(self, postingId):
+        user_id = get_jwt_identity()
+        try :
+            connection = get_connection()
+
+            query = '''select *
+                        from likes
+                        where likerId = %s and postingId = %s;'''
+            
+            record = (user_id, postingId)
+            cursor = connection.cursor(dictionary=True)
+
+            cursor.execute(query, record)
+            result = cursor.fetchall()
+
+            isLike = 0
+
+            if len(result) != 0 :
+                isLike = 1
+            
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"error":str(e)}, 500
+
+
+        return {"result" : "success",
+                "userId" : user_id,
+                "isLike" : isLike}, 200

@@ -49,7 +49,7 @@ api.add_resource(RankingListResource, '/rankingList') # 유저들의 레벨정�
 api.add_resource(RandomBoxResouce, '/box') # 랜덤상자 추가
 api.add_resource(GachaResource, '/gacha') # 상자 뽑기
 
-api.add_resource(LikeResource,'/like/<int:postingId>') # 좋아요 처리
+api.add_resource(LikeResource,'/like/<int:postingId>') # 좋아요 처리 / 좋아요 유무
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
