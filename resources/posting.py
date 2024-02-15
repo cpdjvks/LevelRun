@@ -316,11 +316,9 @@ class PostingResource(Resource):
             cursor.execute(query, record)
 
             result_list = cursor.fetchall()
-            
+
+            tag_list = []
             if len(result_list) != 0 :
-
-                tag_list = []
-
                 for row in result_list :
                     tag_list.append(row['tagName'])
 
@@ -346,11 +344,12 @@ class PostingResource(Resource):
 
                 result_list = cursor.fetchall()
 
-                if len(result_list) == 0 :
-                    return {"Result" : "존재하지 않는 포스팅입니다."}, 400
-            
-            
+                
+                result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
 
+                if len(result_list) == 0 :
+                    return {"Result" : "존재하지 않는 포스팅입니다."}, 400            
+            
             # 포스팅 상세정보 태그 정보 쿼리
             query = '''select u.nickName
                         from posting as p
@@ -366,16 +365,16 @@ class PostingResource(Resource):
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
 
-            result_list = cursor.fetchall()
+            result = cursor.fetchall()
             
-            liker_list = []
-            for row in result_list : 
+            
+            liker_list = []            
+            for row in result : 
                 liker_list.append(row['nickName'])
 
-            print(liker_list)
-
-            result['likerList'] = liker_list
-
+            if len(result) != 0 :
+                result_list['likerList'] = liker_list
+            
             cursor.close()
             connection.close()
 
@@ -386,7 +385,7 @@ class PostingResource(Resource):
             return {"error":str(e)}, 500        
         
         return {"result" : "success",
-                "item" : result,
+                "item" : result_list,
                 "tagList" : tag_list}, 200
     
     # 포스팅 수정
