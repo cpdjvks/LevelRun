@@ -48,8 +48,8 @@ class PostingListResouce(Resource) :
             contain = ","
 
             # 태그가 하나일 때 저장
-            if contain not in str_tags :
-                tag = data['tags']
+            if contain not in str_tags :                                
+                tag = str_tags
 
                 tag = tag.lower()
 
@@ -91,8 +91,11 @@ class PostingListResouce(Resource) :
                 cursor.execute(query, record)
 
             # 태그가 여러개일 때 저장
-            else :
-                tag_list = data['tags'].split(",")
+            else :               
+                str_tags = str_tags.replace(",", "")
+                    
+                if '#' in str_tags :
+                        tag_list = str_tags.split("#")
 
                 for tag in tag_list:                
                     tag = tag.lower()
@@ -108,9 +111,11 @@ class PostingListResouce(Resource) :
 
                     result_list = cursor.fetchall()
 
+                    
+                    # 이미 저장된 태그네임이 있을 때
                     if len(result_list) != 0:
-                        tagNameId = result_list[0]['id']
-
+                        tagNameId = cursor.lastrowid
+                        
                     else:
                         query = '''insert into tagName
                                     (name)
