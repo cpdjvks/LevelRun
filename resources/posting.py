@@ -286,29 +286,27 @@ class PostingResource(Resource):
                     result_list[i]['createdAt'] = row['createdAt'].isoformat()
                     i = i+1
             
-            # 태그가 없을 때
-            elif len(result_list) == 0 :
-                query = '''select p.id as postingId, u.profileUrl,
-                                    u.nickName, l.level, p.imgURL as postingUrl,
-                                    p.content, p.createdAt
-                            from posting as p
-                            join user as u
-                            on p.userId = u.id
-                            join level as l
-                            on u.id = l.userId
-                            where p.id = %s;'''
-            
-                record = (postingId,)
-            
-                cursor = connection.cursor(dictionary=True)
-                cursor.execute(query, record)
+            query = '''select p.id as postingId, u.profileUrl,
+                                u.nickName, l.level, p.imgURL as postingUrl,
+                                p.content, p.createdAt
+                        from posting as p
+                        join user as u
+                        on p.userId = u.id
+                        join level as l
+                        on u.id = l.userId
+                        where p.id = %s;'''
+        
+            record = (postingId,)
+        
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
 
-                result = cursor.fetchall()
-                
-                if len(result) == 0 :
-                    return {"result" : "존재하지 않는 포스팅입니다."}, 400
-                
-                result[0]['createdAt'] = result[0]['createdAt'].isoformat()
+            result = cursor.fetchall()
+            
+            if len(result) == 0 :
+                return {"result" : "존재하지 않는 포스팅입니다."}, 400
+            
+            result[0]['createdAt'] = result[0]['createdAt'].isoformat()            
             
             # 좋아요 누른 유저 가져오기
             query = '''select u.nickName
@@ -330,9 +328,6 @@ class PostingResource(Resource):
             for row in result_list :
                 liker_list.append(row['nickName'])
 
-            if len(result_list) != 0 :
-                result[0]['likerList'] = liker_list
-            
             cursor.close()
             connection.close()
 
@@ -344,7 +339,8 @@ class PostingResource(Resource):
         
         return {"result" : "success",
                 "item" : result,
-                "tagList" : tag_list}, 200
+                "tagList" : tag_list,
+                "likerList" : liker_list}, 200
     
     # 포스팅 수정
     @jwt_required()
