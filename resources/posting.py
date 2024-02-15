@@ -46,99 +46,56 @@ class PostingListResouce(Resource) :
 
             str_tags = data['tags']
             contain = ","
+            
+            if contain in str_tags :
+                str_tags = str_tags.replace(",", "")
 
-            # 태그가 하나이거나 없을 때
-            if contain not in str_tags :
-                tag = str_tags.replace("#", "")
+            tag = str_tags.split("#")[1:]
 
-                tag = tag.lower()
+            for row in tag :
+                tag = row.lower()
+                print(tag)
+                query = '''select *
+                            from tagName
+                            where name = %s;''' 
                 
-                if tag != "" :                    
-                    query = '''select *
-                                from tagName
-                                where name = %s;''' 
-                    
-                    record = (tag, )
+                record = (tag, )
 
-                    cursor = connection.cursor(dictionary=True)
-                    cursor.execute(query, record)
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(query, record)
 
-                    result_list = cursor.fetchall()
-
-                    if len(result_list) != 0:
-                        tagNameId = result_list[0]['id']
-
-                    else:
-                        query = '''insert into tagName
-                                    (name)
-                                    values
-                                    (%s);'''
+                result_list = cursor.fetchall()
                 
-                        record = (tag, )
+                # 태그가 db에 저장돼 있을 때
+                if len(result_list) != 0:
+                    tagNameId = result_list[0]['id']
+                    print(tagNameId)
 
-                        cursor = connection.cursor()
-                        cursor.execute(query, record)
-
-                        tagNameId = cursor.lastrowid
-
-                    query = '''insert into tag
-                                (postingId, tagNameId)
+                # 태그가 db에 저장되어 있지 않을 때
+                else:
+                    query = '''insert into tagName
+                                (name)
                                 values
-                                (%s, %s);'''
-    
-                    record = (postingId, tagNameId)
+                                (%s);'''
+            
+                    record = (tag, )
 
                     cursor = connection.cursor()
                     cursor.execute(query, record)
 
-            # 태그가 여러개일 때 저장
-            else :
-                str_tags = str_tags.replace(",", "")                    
-                
-                tag_list = str_tags.split("#")
+                    tagNameId = cursor.lastrowid
 
-                for tag in tag_list:                
-                    tag = tag.lower()
+                query = '''insert into tag
+                            (postingId, tagNameId)
+                            values
+                            (%s, %s);'''
 
-                    query = '''select *
-                                from tagName
-                                where name = %s;'''
-                    
-                    record = (tag, )
+                record = (postingId, tagNameId)
 
-                    cursor = connection.cursor(dictionary=True)
-                    cursor.execute(query, record)
+                cursor = connection.cursor()
+                cursor.execute(query, record)
 
-                    result_list = cursor.fetchall()
-
-                    
-                    # 이미 저장된 태그네임이 있을 때
-                    if len(result_list) != 0:
-                        tagNameId = cursor.lastrowid
-                        
-                    else:
-                        query = '''insert into tagName
-                                    (name)
-                                    values
-                                    (%s);'''
-                
-                        record = (tag, )
-
-                        cursor = connection.cursor()
-                        cursor.execute(query, record)
-
-                        tagNameId = cursor.lastrowid
-
-                    query = '''insert into tag
-                                (postingId, tagNameId)
-                                values
-                                (%s, %s);'''
-    
-                    record = (postingId, tagNameId)
-
-                    cursor = connection.cursor()
-                    cursor.execute(query, record)
-
+            
             connection.commit()
 
             cursor.close()
