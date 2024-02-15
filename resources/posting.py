@@ -47,55 +47,55 @@ class PostingListResouce(Resource) :
             str_tags = data['tags']
             contain = ","
 
-            # 태그가 하나일 때 저장
-            if contain not in str_tags :                                
-                tag = str_tags
+            # 태그가 하나이거나 없을 때
+            if contain not in str_tags :
+                tag = str_tags.replace("#", "")
 
                 tag = tag.lower()
-
-                query = '''select *
-                            from tagName
-                            where name = %s;'''
                 
-                record = (tag, )
-
-                cursor = connection.cursor(dictionary=True)
-                cursor.execute(query, record)
-
-                result_list = cursor.fetchall()
-
-                if len(result_list) != 0:
-                    tagNameId = result_list[0]['id']
-
-                else:
-                    query = '''insert into tagName
-                                (name)
-                                values
-                                (%s);'''
-            
+                if tag != "" :                    
+                    query = '''select *
+                                from tagName
+                                where name = %s;''' 
+                    
                     record = (tag, )
+
+                    cursor = connection.cursor(dictionary=True)
+                    cursor.execute(query, record)
+
+                    result_list = cursor.fetchall()
+
+                    if len(result_list) != 0:
+                        tagNameId = result_list[0]['id']
+
+                    else:
+                        query = '''insert into tagName
+                                    (name)
+                                    values
+                                    (%s);'''
+                
+                        record = (tag, )
+
+                        cursor = connection.cursor()
+                        cursor.execute(query, record)
+
+                        tagNameId = cursor.lastrowid
+
+                    query = '''insert into tag
+                                (postingId, tagNameId)
+                                values
+                                (%s, %s);'''
+    
+                    record = (postingId, tagNameId)
 
                     cursor = connection.cursor()
                     cursor.execute(query, record)
 
-                    tagNameId = cursor.lastrowid
-
-                query = '''insert into tag
-                            (postingId, tagNameId)
-                            values
-                            (%s, %s);'''
-  
-                record = (postingId, tagNameId)
-
-                cursor = connection.cursor()
-                cursor.execute(query, record)
-
             # 태그가 여러개일 때 저장
-            else :               
-                str_tags = str_tags.replace(",", "")
-                    
-                if '#' in str_tags :
-                        tag_list = str_tags.split("#")
+            else :
+                str_tags = str_tags.replace(",", "")                    
+                
+                tag_list = str_tags.split("#")
 
                 for tag in tag_list:                
                     tag = tag.lower()
@@ -138,8 +138,6 @@ class PostingListResouce(Resource) :
 
                     cursor = connection.cursor()
                     cursor.execute(query, record)
-
-            
 
             connection.commit()
 
