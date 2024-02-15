@@ -319,17 +319,39 @@ class PostingResource(Resource):
 
             result_list = cursor.fetchall()
             
-            tag_list = []
+            if len(result_list) != 0 :
 
-            for row in result_list :
-                tag_list.append(row['tagName'])
-            
+                tag_list = []
+
+                for row in result_list :
+                    tag_list.append(row['tagName'])
+
+                result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
+                result = result_list[0]
+                del result['tagName']
+
             if len(result_list) == 0 :
-                return {"Result" : "존재하지 않는 포스팅입니다."}, 400
+                query = '''select p.id as postingId, u.profileUrl, 
+                                u.nickName, l.level, p.imgURL as postingUrl, 
+                                p.content, p.createdAt
+                        from posting as p                        
+                        join user as u
+                        on p.userId = u.id                        
+                        join level as l
+                        on u.id = l.userId
+                        where p.id = %s;'''
             
-            result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
-            result = result_list[0]
-            del result['tagName']
+                record = (postingId,)
+            
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(query, record)
+
+                result_list = cursor.fetchall()
+
+                if len(result_list) == 0 :
+                    return {"Result" : "존재하지 않는 포스팅입니다."}, 400
+            
+            
 
             # 포스팅 상세정보 태그 정보 쿼리
             query = '''select u.nickName
