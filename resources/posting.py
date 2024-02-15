@@ -229,7 +229,10 @@ class PostingLabelResouce(Resource) :
         i = 0
         for row in tag_list :
             text_to_translate = row
-            tag_list[i] = self.translate_text(text_to_translate, source_language, target_language)
+            tag_list[i] = "#" + self.translate_text(text_to_translate, source_language, target_language)
+
+            if "." in tag_list[i] :                
+                tag_list[i] = tag_list[i].replace('.', '')
             i = i+1
             
         
