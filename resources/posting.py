@@ -318,6 +318,7 @@ class PostingResource(Resource):
             result_list = cursor.fetchall()
 
             tag_list = []
+            # 
             if len(result_list) != 0 :
                 for row in result_list :
                     tag_list.append(row['tagName'])
@@ -342,13 +343,12 @@ class PostingResource(Resource):
                 cursor = connection.cursor(dictionary=True)
                 cursor.execute(query, record)
 
-                result_list = cursor.fetchall()
-
-                
-                result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
+                result_list = cursor.fetchall()                
 
                 if len(result_list) == 0 :
-                    return {"Result" : "존재하지 않는 포스팅입니다."}, 400            
+                    return {"Result" : "존재하지 않는 포스팅입니다."}, 400
+                                
+                result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
             
             # 포스팅 상세정보 태그 정보 쿼리
             query = '''select u.nickName
@@ -357,8 +357,7 @@ class PostingResource(Resource):
                         on p.id = l.postingId
                         join user as u
                         on u.id = l.likerId
-                        where p.id = %s
-                        order by l.id;'''
+                        where p.id = %s;'''
             
             record = (postingId, )
 
@@ -366,14 +365,13 @@ class PostingResource(Resource):
             cursor.execute(query, record)
 
             result = cursor.fetchall()
-            
-            
+
             liker_list = []            
-            for row in result : 
+            for row in result :
                 liker_list.append(row['nickName'])
 
             if len(result) != 0 :
-                result_list['likerList'] = liker_list
+                result_list[0]['likerList'] = liker_list
             
             cursor.close()
             connection.close()
