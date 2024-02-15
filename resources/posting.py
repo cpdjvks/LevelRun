@@ -254,60 +254,63 @@ class PostingResource(Resource):
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
-            query = '''select p.id as postingId, u.profileUrl, 
-                                u.nickName, l.level, p.imgURL as postingUrl, 
+            query = '''select p.id as postingId, u.profileUrl,
+                                u.nickName, l.level, p.imgURL as postingUrl,
                                 t2.name as tagName, p.content, p.createdAt
                         from posting as p
                         join user as u
-                        on p.userId = u.id and p.id = %s
+                        on p.userId = u.id
                         join level as l
                         on u.id = l.userId
                         left join tag as t
                         on t.postingId = p.id
                         join tagName as t2
-                        on t2.id = t.tagNameId;'''
+                        on t2.id = t.tagNameId
+                        where p.id = %s;'''
             
             record = (postingId,)
         
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
-
             result_list = cursor.fetchall()
-
+            
             tag_list = []
-            # 
+            # 태그가 있을 때
             if len(result_list) != 0 :
                 for row in result_list :
                     tag_list.append(row['tagName'])
 
-                result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
-                result = result_list[0]
-                del result['tagName']
-
-            if len(result_list) == 0 :
-                query = '''select p.id as postingId, u.profileUrl, 
-                                u.nickName, l.level, p.imgURL as postingUrl, 
-                                p.content, p.createdAt
-                        from posting as p                        
-                        join user as u
-                        on p.userId = u.id                        
-                        join level as l
-                        on u.id = l.userId
-                        where p.id = %s;'''
+                i = 0
+                for row in result_list :
+                    del result_list[i]['tagName']
+                    result_list[i]['createdAt'] = row['createdAt'].isoformat()
+                    i = i+1
+            
+            # 태그가 없을 때
+            elif len(result_list) == 0 :
+                query = '''select p.id as postingId, u.profileUrl,
+                                    u.nickName, l.level, p.imgURL as postingUrl,
+                                    p.content, p.createdAt
+                            from posting as p
+                            join user as u
+                            on p.userId = u.id
+                            join level as l
+                            on u.id = l.userId
+                            where p.id = %s;'''
             
                 record = (postingId,)
             
                 cursor = connection.cursor(dictionary=True)
                 cursor.execute(query, record)
 
-                result_list = cursor.fetchall()                
-
-                if len(result_list) == 0 :
-                    return {"Result" : "존재하지 않는 포스팅입니다."}, 400
-                                
-                result_list[0]['createdAt'] = result_list[0]['createdAt'].isoformat()
+                result = cursor.fetchall()
+                
+                if len(result) == 0 :
+                    return {"result" : "존재하지 않는 포스팅입니다."}, 400
+                
+                result[0]['createdAt'] = result[0]['createdAt'].isoformat()
             
-            # 포스팅 상세정보 태그 정보 쿼리
+            # 좋아요 누른 유저 가져오기
             query = '''select u.nickName
                         from posting as p
                         join likes as l
@@ -321,14 +324,14 @@ class PostingResource(Resource):
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
 
-            result = cursor.fetchall()
+            result_list = cursor.fetchall()
 
-            liker_list = []            
-            for row in result :
+            liker_list = []
+            for row in result_list :
                 liker_list.append(row['nickName'])
 
-            if len(result) != 0 :
-                result_list[0]['likerList'] = liker_list
+            if len(result_list) != 0 :
+                result[0]['likerList'] = liker_list
             
             cursor.close()
             connection.close()
@@ -340,7 +343,7 @@ class PostingResource(Resource):
             return {"error":str(e)}, 500        
         
         return {"result" : "success",
-                "item" : result_list,
+                "item" : result,
                 "tagList" : tag_list}, 200
     
     # 포스팅 수정
