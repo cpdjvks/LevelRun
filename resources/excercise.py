@@ -20,7 +20,7 @@ class ExcerciseRecordResource(Resource):
             
             # 포스팅 상세정보 쿼리
             query = '''select *
-                        from excerciseLog
+                        from exercise
                         where userId = %s;'''
             
             record = (user_id,)
@@ -31,10 +31,10 @@ class ExcerciseRecordResource(Resource):
 
             # 데이터베이스에 유저에 대한 정보가 없을 때 (신규 유저)
             if len(result_list) == 0 :
-                query = '''insert into excerciseLog
-                            (userId, distance, cal, time, steps)
+                query = '''insert into exercise
+                            (userId)
                             values
-                            (%s, 0, 0, 0, 0);;'''
+                            (%s);;'''
             
                 record = (user_id,)
             
@@ -45,10 +45,11 @@ class ExcerciseRecordResource(Resource):
                 is_equal = 0
 
                 # 현재 시간 정보를 받아온다
-                current_time = datetime.now()
+                seoul_timezone = pytz.timezone('Asia/Seoul')
+                current_time = datetime.now().astimezone(seoul_timezone)                
                 current_time = current_time.strftime("%Y-%m-%d")
 
-                seoul_timezone = pytz.timezone('Asia/Seoul')
+                
                 
                 # 현재 시간
                 print(current_time)
@@ -65,21 +66,22 @@ class ExcerciseRecordResource(Resource):
                     
                 #  비교한 시간정보가 같을 때 update문을 실행한다.
                 if is_equal == 1 :                    
-                    query = '''update excerciseLog
-                                set distance = %s, cal = %s, time = %s, steps = %s
+                    query = '''update exercise
+                                set distance = %s, kcal = %s, time = %s, steps = %s
                                 where userId = %s and createdAt = %s;'''
-                    record = (data['distance'], data['cal'], data['time'], data['steps'], user_id, date_time)
+                    record = (data['distance'], data['kcal'], data['time'], data['steps'], user_id, date_time)
 
                     cursor = connection.cursor()
                     cursor.execute(query, record)
+
                 # 비교한 시간정보가 다를 때 inster 한다.
                 else :
-                    query = '''insert into excerciseLog
-                                (userId, distance, cal, time, steps)
+                    query = '''insert into exercise
+                                (userId, distance, kcal, time, steps)
                                 values
                                 (%s, %s, %s, %s, %s);'''
                     
-                    record = (user_id, data['distance'], data['cal'], data['time'], data['steps'])
+                    record = (user_id, data['distance'], data['kcal'], data['time'], data['steps'])
 
                     cursor = connection.cursor()
                     cursor.execute(query, record)
@@ -96,17 +98,18 @@ class ExcerciseRecordResource(Resource):
             return {"error":str(e)}, 500        
         
         return {"result" : "success"}, 200
+    
     # 운동 기록 가져오기
     @jwt_required()
     def get(self):
-        user_id = get_jwt_identity()
+        user_id = get_jwt_identity()        
 
         try:
             connection = get_connection()
             
             # 포스팅 상세정보 쿼리
             query = '''select *
-                        from excerciseLog
+                        from exercise
                         where userId = %s;'''
             
             record = (user_id,)
@@ -115,11 +118,10 @@ class ExcerciseRecordResource(Resource):
             cursor.execute(query, record)
             result_list = cursor.fetchall()
 
-            # 현재 시간 정보를 받아온다            
-            current_time = datetime.now()
-            current_time= current_time.strftime("%Y-%m-%d")
-
+            # 현재 시간 정보를 받아온다
             seoul_timezone = pytz.timezone('Asia/Seoul')
+            current_time = datetime.now().astimezone(seoul_timezone)
+            current_time= current_time.strftime("%Y-%m-%d")
 
             #  db에 정보가 없을 때 
             if len(result_list) == 0 :
@@ -143,14 +145,26 @@ class ExcerciseRecordResource(Resource):
                 if current_time == db_time :
                     time = row['createdAt']
 
-                    query = '''select id, userId, distance, cal, steps
-                                from excerciseLog
+                    query = '''select id, userId, distance, kcal, time, steps
+                                from exercise
                                 where userId = %s and createdAt = %s;'''
                     record = (user_id, time)
 
                     cursor = connection.cursor(dictionary=True)
                     cursor.execute(query, record)
                     result = cursor.fetchall()
+                    
+                    time_obj = datetime.strptime(str(result[0]['time']), '%H:%M:%S').time()
+
+                    hours, minutes, seconds = str(time_obj).split(':')
+                    total_seconds = int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+
+                    del result[0]['time']
+                    result[0]['seconds'] = total_seconds
+                    
+                    return {"result" : "success",
+                            "items" : result}, 200
+                    
 
             cursor.close()
             connection.close()
@@ -162,4 +176,6 @@ class ExcerciseRecordResource(Resource):
             return {"error":str(e)}, 500        
         
         return {"result" : "success",
-                "items" : result}, 200
+                "steps" : 0,
+                "cal" : 0,
+                "distance" : 0}, 200
