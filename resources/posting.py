@@ -345,48 +345,46 @@ class PostingResource(Resource):
     # 포스팅 수정
     @jwt_required()
     def put(self, postingId):
-
-        file = request.files.get('image')
         content = request.form.get('content')
         tag_list = request.form.get('tag')
-
         userId = get_jwt_identity()
 
-        if file is None :
-            return {'error' : '이미지를 업로드 해주세요'}, 400
-        
-        if content is None :
-            return {'error' : '내용을 입력해주세요'}, 400
+        if content is None:
+            return {'error': '내용을 입력해주세요'}, 400
         
         currentTime = datetime.now()
-        newFileName = currentTime.isoformat().replace(':', '_') + str(userId) +'jpeg'
-        file.filename = newFileName
-
-        s3 = boto3.client('s3',
-                          aws_access_key_id = Config.AWS_ACCESS_KEY_ID,
-                          aws_secret_access_key = Config.AWS_SECRET_ACCESS_KEY)
-        
-        try:
-            s3.upload_fileobj(file, Config.S3_BUCKET,
-                             file.filename,
-                             ExtraArgs = {'ACL':'public-read',
-                                           'ContentType':'image/jpeg'})
-        except Exception as e:
-            print(e)
-            return {'error' : str(e)}, 500
-        
+        newFileName = currentTime.isoformat().replace(':', '_') + str(userId) + 'jpeg'
 
         try:
+            if 'image' in request.files:
+                file = request.files['image']
+                file.filename = newFileName
+                s3 = boto3.client('s3',
+                                aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
+                                aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY)
+                s3.upload_fileobj(file, Config.S3_BUCKET,
+                                file.filename,
+                                ExtraArgs={'ACL': 'public-read',
+                                            'ContentType': 'image/jpeg'})
+                imgURL = Config.S3_LOCATION + file.filename
+            else:
+                imgURL = None
+
             connection = get_connection()
-            query = '''update posting
-                        set imgURl = %s,
-                        content = %s 
-                        where id = %s and userId = %s;'''
-            
-            imgURL = Config.S3_LOCATION + file.filename
 
-            record = (imgURL, content, postingId, userId)
-            
+            if imgURL:
+                query = '''update posting
+                            set imgURl = %s,
+                            content = %s
+                            where id = %s and userId = %s;'''
+                record = (imgURL, content, postingId, userId)
+
+            else:
+                query = '''update posting
+                            set content = %s
+                            where id = %s and userId = %s;'''
+                record = (content, postingId, userId)
+                
             cursor = connection.cursor()
             cursor.execute(query, record)
 
