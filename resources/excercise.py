@@ -5,12 +5,6 @@ from flask_restful import Resource
 from mysql.connector import Error
 import pytz
 
-import boto3
-import sys
-import urllib.request
-
-import requests
-
 from config import Config
 from mysql_connection import get_connection
 
@@ -52,7 +46,7 @@ class ExcerciseRecordResource(Resource):
 
                 # 현재 시간 정보를 받아온다
                 current_time = datetime.now()
-                current_time= current_time.strftime("%Y-%m-%d")
+                current_time = current_time.strftime("%Y-%m-%d")
 
                 seoul_timezone = pytz.timezone('Asia/Seoul')
                 
@@ -102,3 +96,70 @@ class ExcerciseRecordResource(Resource):
             return {"error":str(e)}, 500        
         
         return {"result" : "success"}, 200
+    # 운동 기록 가져오기
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+
+        try:
+            connection = get_connection()
+            
+            # 포스팅 상세정보 쿼리
+            query = '''select *
+                        from excerciseLog
+                        where userId = %s;'''
+            
+            record = (user_id,)
+        
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
+            # 현재 시간 정보를 받아온다            
+            current_time = datetime.now()
+            current_time= current_time.strftime("%Y-%m-%d")
+
+            seoul_timezone = pytz.timezone('Asia/Seoul')
+
+            #  db에 정보가 없을 때 
+            if len(result_list) == 0 :
+
+                cursor.close()
+                connection.close()
+
+                return {"result" : "success",
+                        "steps" : 0,
+                        "cal" : 0,
+                        "distance" : 0}, 200
+            
+            # db에 정보가 있으면 가져온다.
+            # 금일 운동 기록이 있는지 확인한다            
+            for row in result_list :
+                db_time = row['createdAt']
+                db_time = db_time.astimezone(seoul_timezone)
+                db_time = db_time.strftime("%Y-%m-%d")
+                
+
+                if current_time == db_time :
+                    time = row['createdAt']
+
+                    query = '''select id, userId, distance, cal, steps
+                                from excerciseLog
+                                where userId = %s and createdAt = %s;'''
+                    record = (user_id, time)
+
+                    cursor = connection.cursor(dictionary=True)
+                    cursor.execute(query, record)
+                    result = cursor.fetchall()
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"error":str(e)}, 500        
+        
+        return {"result" : "success",
+                "items" : result}, 200

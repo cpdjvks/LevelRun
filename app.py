@@ -52,7 +52,7 @@ api.add_resource(RankingListResource, '/rankingList') # 유저들의 레벨정�
 api.add_resource(RandomBoxResouce, '/box') # 랜덤상자 추가
 api.add_resource(GachaResource, '/gacha') # 상자 뽑기
 
-api.add_resource(ExcerciseRecordResource, '/excercise') # 운동 기록 저장/ 수정
+api.add_resource(ExcerciseRecordResource, '/excercise') # 운동 기록 저장/ 수정 / 가져오기
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
