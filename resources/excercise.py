@@ -46,7 +46,7 @@ class ExcerciseRecordResource(Resource):
 
                 # 현재 시간 정보를 받아온다
                 seoul_timezone = pytz.timezone('Asia/Seoul')
-                current_time = datetime.now().astimezone(seoul_timezone)                
+                current_time = datetime.now().astimezone(seoul_timezone)
                 current_time = current_time.strftime("%Y-%m-%d")
 
                 
