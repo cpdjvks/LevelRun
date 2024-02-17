@@ -111,8 +111,7 @@ class PostingListResouce(Resource) :
  
     # 모든 포스팅 가져오기(최신순)
     @jwt_required()
-    def get(self) :
-        
+    def get(self) :        
         userId = get_jwt_identity()
         offset = request.args.get('offset')
         limit = request.args.get('limit')
@@ -483,15 +482,14 @@ class PostingPopResource(Resource):
 
             connection = get_connection()
             
-            query = '''select *, count(l.id) as likersCnt
-                        from posting p
-                        left join likes l
-                        on p.id = l.postingId
+            query = '''select p.*, count(l.id) as likersCnt
+                        from posting as p
+                        left join likes as l
+                        on l.postingId = p.id
                         group by p.id
-                        order by likersCnt desc
-                        limit '''+offset+''', '''+limit+''';'''
+                        order by likersCnt desc, p.createdAt desc
+                        limit ''' + offset + ''', ''' + limit + ''';'''            
             
-            record = (userId, )
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query)
             result_list = cursor.fetchall()
