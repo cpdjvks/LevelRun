@@ -345,34 +345,35 @@ class PostingResource(Resource):
     # 포스팅 수정
     @jwt_required()
     def put(self, postingId):
-        content = request.form.get('content')
-        tag_list = request.form.get('tag')
-        userId = get_jwt_identity()
+        data = request.get_json()
+        content = data['content']
+        tag = data['tags']
+        imgURL = data['imgURL']
+        userId = get_jwt_identity()       
 
         if content is None:
             return {'error': '내용을 입력해주세요'}, 400
         
-        currentTime = datetime.now()
-        newFileName = currentTime.isoformat().replace(':', '_') + str(userId) + 'jpeg'
+        # 받아온 태그의 공백과 쉼표를 지운다.
+        tag = tag.replace(" ", "")        
+        tag = tag.replace(",", "")
+        
+        tag_list = tag.split("#")
+        del tag_list[0]
+        currentTime = datetime.now()        
 
         try:
-            if 'image' in request.files:
-                file = request.files['image']
-                file.filename = newFileName
-                s3 = boto3.client('s3',
-                                aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
-                                aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY)
-                s3.upload_fileobj(file, Config.S3_BUCKET,
-                                file.filename,
-                                ExtraArgs={'ACL': 'public-read',
-                                            'ContentType': 'image/jpeg'})
-                imgURL = Config.S3_LOCATION + file.filename
-            else:
-                imgURL = None
-
             connection = get_connection()
 
-            if imgURL:
+            # 기존에 있던 태그테이블의 컬럼을 지운다.
+            query = '''delete from tag
+                        where postingId = %s;'''
+            record = (postingId,)
+            
+            cursor = connection.cursor()
+            cursor.execute(query, record)
+
+            if imgURL :
                 query = '''update posting
                             set imgURl = %s,
                             content = %s
@@ -388,45 +389,45 @@ class PostingResource(Resource):
             cursor = connection.cursor()
             cursor.execute(query, record)
 
-            # 태그 수정
-            tag_list = ''.join(tag_list).split()
-            for tag in tag_list:
-                tag = tag.strip().lower().replace("#", "")
+            # 포스팅 수정시 받은 태그가 db에 있는지 확인한다.
+            for row in tag_list:                
                 query = '''select *
                             from tagName
                             where name = %s;'''
-                record = (tag, )
+                record = (row, )
 
                 cursor = connection.cursor(dictionary=True)
                 cursor.execute(query, record)
 
                 result_list = cursor.fetchall()
 
+                # db에 태그정보가 있을 때 저장한다.
                 if len(result_list) != 0:
                     tagNameId = result_list[0]['id']
 
+                # db에 태그정보가 없으면 태그네임 테이블에 저장하고 id값을 세팅한다.
                 else:
                     query = '''insert into tagName
                                 (name)
                                 values
                                 (%s);'''
             
-                    record = (tag, )
+                    record = (row, )
 
                     cursor = connection.cursor()
                     cursor.execute(query, record)
 
                     tagNameId = cursor.lastrowid
 
-                query = '''update tag
-                            set tagNameId = %s
-                            where postingId = %s;'''
+                query = '''insert into tag
+                            (tagNameId, postingId)
+                            values
+                            (%s, %s);'''
   
                 record = (tagNameId, postingId)
 
                 cursor = connection.cursor()
                 cursor.execute(query, record)
-            postingId = cursor.lastrowid
 
             connection.commit()
 
