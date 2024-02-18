@@ -184,3 +184,61 @@ class ExcerciseRecordResource(Resource):
 
         return {"result" : "success",
                 "items" : result_list}, 200
+    
+
+
+class ExcerciseListResource(Resource):
+    # 운동 기록 리스트 가져오기
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()        
+
+        try:
+            connection = get_connection()
+            
+            # 포스팅 상세정보 쿼리
+            query = '''select *
+                    from exercise
+                    where userId = %s
+                    order by createdAt desc;;'''
+            
+            record = (user_id,)
+        
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
+            
+            seoul_timezone = pytz.timezone('Asia/Seoul')
+            
+            i = 0
+            for row in result_list :
+                db_time = row['createdAt']
+                db_time = db_time.astimezone(seoul_timezone)
+                db_time = db_time.strftime("%Y-%m-%d")
+                result_list[i]['createdAt'] = db_time
+                    
+                time_obj = datetime.strptime(str(row['time']), '%H:%M:%S').time()
+
+                hours, minutes, seconds = str(time_obj).split(':')
+                total_seconds = int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+
+                del result_list[i]['time']
+
+                result_list[i]['seconds'] = total_seconds
+
+                i = i+1
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"error":str(e)}, 500
+        
+        
+
+        return {"result" : "success",
+                "items" : result_list}, 200

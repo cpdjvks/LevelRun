@@ -5,7 +5,7 @@ from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from config import Config
 from resources.RandomBox import RandomBoxResouce
-from resources.excercise import ExcerciseRecordResource
+from resources.excercise import ExcerciseListResource, ExcerciseRecordResource
 from resources.gacha import GachaResource
 
 from resources.like import LikeResource
@@ -53,6 +53,7 @@ api.add_resource(RandomBoxResouce, '/box') # 랜덤상자 추가
 api.add_resource(GachaResource, '/gacha') # 상자 뽑기
 
 api.add_resource(ExcerciseRecordResource, '/excercise') # 운동 기록 저장/ 수정 / 가져오기
+api.add_resource(ExcerciseListResource, '/excercise/list') # 운동 기록 리스트 가져오기
 
 def handler(event, context) :
     return serverless_wsgi.handle_request(app, event, context)
