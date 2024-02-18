@@ -125,14 +125,16 @@ class ExcerciseRecordResource(Resource):
 
             #  db에 정보가 없을 때 
             if len(result_list) == 0 :
+                result_list = [{}]
+                result_list[0]['steps'] = 0
+                result_list[0]['kcal'] = 0
+                result_list[0]['distance'] = 0
 
                 cursor.close()
                 connection.close()
 
                 return {"result" : "success",
-                        "steps" : 0,
-                        "cal" : 0,
-                        "distance" : 0}, 200
+                        "items" : result_list}, 200
             
             # db에 정보가 있으면 가져온다.
             # 금일 운동 기록이 있는지 확인한다            
@@ -173,9 +175,12 @@ class ExcerciseRecordResource(Resource):
             print(e)
             cursor.close()
             connection.close()
-            return {"error":str(e)}, 500        
+            return {"error":str(e)}, 500
         
+        result_list = [{}]
+        result_list[0]['steps'] = 0
+        result_list[0]['kcal'] = 0
+        result_list[0]['distance'] = 0
+
         return {"result" : "success",
-                "steps" : 0,
-                "cal" : 0,
-                "distance" : 0}, 200
+                "items" : result_list}, 200
