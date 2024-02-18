@@ -241,4 +241,5 @@ class ExcerciseListResource(Resource):
         
 
         return {"result" : "success",
-                "items" : result_list}, 200
+                "items" : result_list,
+                "count" : len(result_list)}, 200
