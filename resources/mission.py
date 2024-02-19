@@ -142,5 +142,35 @@ class MissionResource(Resource):
         return {"result": "success",
                 "items" : result_list}, 200
 
+class MissionInfoResource(Resource):
+    # 임무완료 정보 가져오기
+    @jwt_required()
+    def get(self):
+        userId = get_jwt_identity()
 
+        try :            
+            connection = get_connection()
+            
+            query = '''select l.*, m.isClear1, m.isClear2, m.isClear3, m.isClear4, m.isClear5
+                        from level as l
+                        left join mission as m
+                        on m.userId = l.userId
+                        where l.userId = %s;'''
+            
+            record = (userId, )
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)            
+            result_list = cursor.fetchall()            
+
+            cursor.close()
+            connection.close()
+
+        except Error as e :
+            print(e)
+            cursor.close()
+            connection.close()
+            return {"result": "fail", "error": str(e)}, 500
+
+        return {"result": "success",
+                "items" : result_list}, 200
 
