@@ -32,6 +32,28 @@ class RankerResource(Resource):
             cursor.execute(query)
             result_list = cursor.fetchall()
 
+            i = 0
+            for row in result_list :
+                query = '''select *
+                            from posting
+                            where userId = %s
+                            order by createdAt desc
+                            limit 0, 1;'''
+                
+                record = (row['userId'],)
+
+                cursor =connection.cursor(dictionary=True)
+                cursor.execute(query, record)
+                result = cursor.fetchall()
+                
+                if len(result) != 0 :
+                    result_list[i]['postingId'] = result[0]['id']
+                
+                i = i + 1
+
+                
+                
+
             cursor.close()
             connection.close()
 
