@@ -11,13 +11,22 @@ from config import Config
 from mysql_connection import get_connection
       
 class MissionResource(Resource):
-    # 포스팅 인기순 정렬
+    # 임무완료
     @jwt_required()
     def post(self):
         userId = get_jwt_identity()
         data = request.get_json()
         mission = "isClear" + str(data['mission'])
-        
+
+        if data['mission'] == 1 :
+            exp = 100
+        elif data['mission'] == 2 :
+            exp = 300
+        elif data['mission'] == 3 :
+            exp = 500
+        elif data['mission'] == 4 :
+            exp = 1000
+
         try :            
             connection = get_connection()
             
@@ -28,7 +37,7 @@ class MissionResource(Resource):
             record = (userId, )
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
-            result_list = cursor.fetchall()            
+            result_list = cursor.fetchall()
 
             # 테이블에 임무 정보가 없으면 insert 한다
             if len(result_list) == 0 :
@@ -39,7 +48,7 @@ class MissionResource(Resource):
                 
                 record = (userId,)
                 cursor = connection.cursor()
-                cursor.execute(query, record)                
+                cursor.execute(query, record)
 
             # 테이블에 임무 정보가 있으면 오늘 날짜가 있는지 확인한다
             else :
@@ -80,6 +89,46 @@ class MissionResource(Resource):
                     cursor = connection.cursor()
                     cursor.execute(query, record)
 
+            # 레벨 테이블을 조회한다.
+            query = '''select *
+                        from level
+                        where userId = %s;'''
+            record = (userId, )
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result = cursor.fetchall()
+
+            level = result[0]['level']
+            userExp = result[0]['exp']            
+
+            # 레벨업일 때
+            if ((level*1000) < (userExp+exp)) :
+                setExp = (userExp+exp) - (level*1000)
+                query = '''update level
+                            set level = %s, exp = %s
+                            where userId = %s;'''
+                record = (level+1, setExp, userId)
+                cursor = connection.cursor()
+                cursor.execute(query, record)
+            
+            # 레벨업이 아닐 때
+            else :
+                setExp = (userExp+exp)
+                query = '''update level
+                            set exp = %s
+                            where userId = %s;'''
+                record = (setExp, userId)
+                cursor = connection.cursor()
+                cursor.execute(query, record)
+
+            query = '''select *
+                        from level
+                        where userId = %s;'''
+            record = (userId,)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+
             connection.commit()
             cursor.close()
             connection.close()
@@ -90,5 +139,8 @@ class MissionResource(Resource):
             connection.close()
             return {"result": "fail", "error": str(e)}, 500
 
-        return {"result": "success"}, 200
+        return {"result": "success",
+                "items" : result_list}, 200
+
+
 
