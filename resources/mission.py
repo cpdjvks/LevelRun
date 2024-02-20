@@ -19,13 +19,15 @@ class MissionResource(Resource):
         mission = "isClear" + str(data['mission'])
 
         if data['mission'] == 1 :
-            exp = 100
+            exp = 10
         elif data['mission'] == 2 :
-            exp = 300
+            exp = 30
         elif data['mission'] == 3 :
-            exp = 500
+            exp = 50
         elif data['mission'] == 4 :
-            exp = 1000
+            exp = 300
+        elif data['mission'] == 5 :
+            exp = 500
 
         try :            
             connection = get_connection()
