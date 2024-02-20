@@ -150,6 +150,19 @@ class MissionInfoResource(Resource):
 
         try :            
             connection = get_connection()
+
+            query = '''select *
+                        from level;'''
+            
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query)
+            result = cursor.fetchall()
+
+            i = 0
+            for row in result :
+                if row['userId'] == userId :
+                    rank = i + 1
+                i = i + 1
             
             query = '''select l.*, m.isClear1, m.isClear2, m.isClear3, m.isClear4, m.isClear5
                         from level as l
@@ -159,8 +172,8 @@ class MissionInfoResource(Resource):
             
             record = (userId, )
             cursor = connection.cursor(dictionary=True)
-            cursor.execute(query, record)            
-            result_list = cursor.fetchall()            
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()           
 
             cursor.close()
             connection.close()
@@ -172,5 +185,6 @@ class MissionInfoResource(Resource):
             return {"result": "fail", "error": str(e)}, 500
 
         return {"result": "success",
+                "rank" : rank,
                 "items" : result_list}, 200
 
