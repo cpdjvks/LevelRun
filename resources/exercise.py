@@ -43,13 +43,12 @@ class ExcerciseRecordResource(Resource):
 
             else :                
                 is_equal = 0
+                monthlySteps = 0
 
                 # 현재 시간 정보를 받아온다
                 seoul_timezone = pytz.timezone('Asia/Seoul')
-                current_time = datetime.now().astimezone(seoul_timezone)
-                current_time = current_time.strftime("%Y-%m-%d")
-
-                
+                current_time = datetime.now().astimezone(seoul_timezone)                
+                current_time = current_time.strftime("%Y-%m-%d")                
                 
                 # 현재 시간
                 print(current_time)
@@ -57,7 +56,7 @@ class ExcerciseRecordResource(Resource):
                 # db에서 받아온 표준시간을 서울시간으로 변경후 비교한다.
                 for row in result_list :
                     db_time = row['createdAt']
-                    db_time = db_time.astimezone(seoul_timezone)
+                    db_time = db_time.astimezone(seoul_timezone)                    
                     db_time = db_time.strftime("%Y-%m-%d")
                     
                     if current_time  == db_time :
@@ -121,6 +120,7 @@ class ExcerciseRecordResource(Resource):
             # 현재 시간 정보를 받아온다
             seoul_timezone = pytz.timezone('Asia/Seoul')
             current_time = datetime.now().astimezone(seoul_timezone)
+            current_day = current_time.strftime("%Y-%m")
             current_time= current_time.strftime("%Y-%m-%d")
 
             #  db에 정보가 없을 때 
@@ -137,12 +137,23 @@ class ExcerciseRecordResource(Resource):
                         "items" : result_list}, 200
             
             # db에 정보가 있으면 가져온다.
-            # 금일 운동 기록이 있는지 확인한다            
+            # 금일 운동 기록이 있는지 확인한다
+            # 월 총 걸음수를 구한다.
+            monthlySteps = 0
+            return_result = [{}]
+            i = 0
             for row in result_list :
                 db_time = row['createdAt']
                 db_time = db_time.astimezone(seoul_timezone)
+                db_day = db_time.strftime("%Y-%m")
                 db_time = db_time.strftime("%Y-%m-%d")
                 
+                if current_day == db_day :
+                    monthlySteps = monthlySteps + row['steps']
+
+
+                
+                # 현재
 
                 if current_time == db_time :
                     time = row['createdAt']
@@ -163,10 +174,13 @@ class ExcerciseRecordResource(Resource):
 
                     del result[0]['time']
                     result[0]['seconds'] = total_seconds
+                    return_result[0] = result
                     
+                if (len(result_list)-1) == i :
                     return {"result" : "success",
-                            "items" : result}, 200
-                    
+                            "items" : result,
+                            "monthlySteps" : monthlySteps}, 200
+                i = i + 1
 
             cursor.close()
             connection.close()
