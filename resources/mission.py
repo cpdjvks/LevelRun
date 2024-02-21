@@ -160,22 +160,51 @@ class MissionInfoResource(Resource):
             cursor.execute(query)
             result = cursor.fetchall()
 
+            # 현재 시간 정보를 받아온다
+            seoul_timezone = pytz.timezone('Asia/Seoul')
+            current_time = datetime.now().astimezone(seoul_timezone)
+            current_day = current_time.strftime("%Y-%m")
+            current_time= current_time.strftime("%Y-%m-%d")
+
             i = 0
             for row in result :
                 if row['userId'] == userId :
                     rank = i + 1
                 i = i + 1
             
-            query = '''select l.*, m.isClear1, m.isClear2, m.isClear3, m.isClear4, m.isClear5
+            query = '''select l.*, m.isClear1, m.isClear2, 
+                        m.isClear3, m.isClear4, m.isClear5, m.createdAt
                         from level as l
                         left join mission as m
                         on m.userId = l.userId
-                        where l.userId = %s;'''
+                        where l.userId = %s
+                        order by m.createdAt desc;'''
             
             record = (userId, )
             cursor = connection.cursor(dictionary=True)
             cursor.execute(query, record)
-            result_list = cursor.fetchall()           
+            result_list = cursor.fetchall()
+
+            i = 0
+            isClear4 = 0
+            isClear5 = 0
+            for row in result_list :                
+                db_time = row['createdAt']
+                db_time = db_time.astimezone(seoul_timezone)
+                db_day = db_time.strftime("%Y-%m")
+                db_time = db_time.strftime("%Y-%m-%d")
+
+                if current_day == db_day :
+                    if row['isClear4'] == 1 :
+                        isClear4 = 1
+                    if row['isClear5'] == 1 :
+                        isClear5 = 1
+                        
+                del result_list[i]['createdAt']
+                i = i+1
+            
+            result_list[0]['isClear4'] = isClear4
+            result_list[0]['isClear5'] = isClear5
 
             cursor.close()
             connection.close()
