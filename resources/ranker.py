@@ -76,7 +76,7 @@ class RankingListResource(Resource):
         try:            
             connection = get_connection()
 
-            query = '''select u.nickName, l.*
+            query = '''select u.nickName, u.profileUrl, l.*
                         from user as u
                         join level as l
                         on u.id = l.userId
