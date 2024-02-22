@@ -61,11 +61,13 @@ class GachaResource(Resource):
             connection.commit()
             cursor.close()
             connection.close()
+
         except Error as e:
             print(e)
             cursor.close()
             connection.close()
             return {"result": "fail", "error": str(e)}, 500
+        
         return {"result": "success",
                 "items" : img_url,
                 "boxCount" : box_count}, 200
