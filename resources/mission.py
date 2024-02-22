@@ -188,6 +188,12 @@ class MissionInfoResource(Resource):
             i = 0
             isClear4 = 0
             isClear5 = 0
+
+            if result_list[0]['isClear1'] is None :
+                return {"result": "success",
+                        "rank" : rank,
+                        "items" : result_list}, 200
+
             for row in result_list :                
                 db_time = row['createdAt']
                 db_time = db_time.astimezone(seoul_timezone)
