@@ -305,15 +305,24 @@ class UserInfoResource(Resource) :
     # 유저 정보 수정
     @jwt_required()
     def put(self) :
-
         nickName = request.form.get('nickName')
         file = request.files.get('imgProfile')
         userId = get_jwt_identity()
 
-        if file is None :
+        if file is None :            
             try:
                 connection = get_connection()
 
+                query = '''select nickName
+                            from user
+                            where id = %s;'''
+                record = (userId, )
+
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(query, record)
+                result_list = cursor.fetchall()
+                
+                myNick = result_list[0]['nickName']
                 # 닉네임 중복 체크
                 query = '''select id, nickName, email, password
                         from user
@@ -324,7 +333,7 @@ class UserInfoResource(Resource) :
                 cursor.execute(query, record)
                 result_list = cursor.fetchall()
 
-                if len(result_list) != 0 :
+                if len(result_list) != 0 and result_list[0]['nickName'] != myNick :
                     cursor.close()
                     connection.close()
                     return {"result" : "중복된 닉네임이 존재 합니다."}, 406
@@ -337,6 +346,7 @@ class UserInfoResource(Resource) :
                 record = (nickName, userId)
                 cursor = connection.cursor()
                 cursor.execute(query, record)
+
                 connection.commit()
                 cursor.close()
                 connection.close()
@@ -345,10 +355,11 @@ class UserInfoResource(Resource) :
                 print(e)
                 cursor.close()
                 connection.close()
-            return {'result':str(e)}, 500
-        return {'result':'success'}, 200
+                return {'result':str(e)}, 500
+            
+            return {'result':'success'}, 200
     
-
+        
         # 파일 처리
         current_time = datetime.now()
         new_file_name = current_time.isoformat().replace(':', '_') + str(userId) +'jpeg'
@@ -369,6 +380,17 @@ class UserInfoResource(Resource) :
         try:
             connection = get_connection()
 
+            query = '''select nickName
+                            from user
+                            where id = %s;'''
+            record = (userId, )
+
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, record)
+            result_list = cursor.fetchall()
+            
+            myNick = result_list[0]['nickName']
+
             # 닉네임 중복 체크
             query = '''select id, nickName, email, password
                     from user
@@ -379,7 +401,7 @@ class UserInfoResource(Resource) :
             cursor.execute(query, record)
             result_list = cursor.fetchall()
 
-            if len(result_list) != 0 :
+            if len(result_list) != 0 and result_list[0]['nickName'] != myNick :
                 cursor.close()
                 connection.close()
                 return {"result" : "중복된 닉네임이 존재 합니다."}, 406
