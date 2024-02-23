@@ -178,7 +178,7 @@ class ExcerciseRecordResource(Resource):
                     
                 if (len(result_list)-1) == i :
                     return {"result" : "success",
-                            "items" : result,
+                            "items" : return_result,
                             "monthlySteps" : monthlySteps}, 200
                 i = i + 1
 
