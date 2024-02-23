@@ -174,7 +174,7 @@ class ExcerciseRecordResource(Resource):
 
                     del result[0]['time']
                     result[0]['seconds'] = total_seconds
-                    return_result[0] = result
+                    return_result = result
                     
                 if (len(result_list)-1) == i :
                     return {"result" : "success",
