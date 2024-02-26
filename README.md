@@ -40,7 +40,7 @@
 
 ### 💡Server Architecture
 #
-![image](https://github.com/tmdghlrla/LevelRun/assets/151480604/65ed5128-be13-45b2-bb5c-867e939b3b88)
+![image](https://github.com/tmdghlrla/LevelRun_Client/assets/151480604/467d1c0b-7a87-4ca8-ace7-71fe8d924fa7)
 
 </br>
 
