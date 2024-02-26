@@ -3,8 +3,7 @@
 
 ### 🖥 LevelRun 프로젝트 소개
 #
-![slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
+
 
 새해에는 많은 사람들이 건강 증진을 위해 헬스장이나 피트니스 센터를 찾으며 건강한 생활을 추구합니다.
 
@@ -76,3 +75,9 @@
 사용자는 이미지를 업로드하고 다른 사용자들과 공유할 수 있으며, 
 
 이미지를 업로드할 때 AWS의 **Rekognition API**를 활용하여 이미지에 대한 자동 태깅 시스템을 구현하였습니다.
+
+
+### 💡Tech Stack 
+#
+![slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
