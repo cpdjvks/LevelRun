@@ -34,6 +34,7 @@
 ### 💡Server Architecture
 #
 
+![image](https://github.com/tmdghlrla/LevelRun/assets/151480604/65ed5128-be13-45b2-bb5c-867e939b3b88)
 
 
 ### 💡 프로젝트 핵심 기능
