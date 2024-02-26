@@ -3,6 +3,7 @@
 
 ### 🖥 LevelRun 프로젝트 소개
 #
+![slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
 
 새해에는 많은 사람들이 건강 증진을 위해 헬스장이나 피트니스 센터를 찾으며 건강한 생활을 추구합니다.
 
