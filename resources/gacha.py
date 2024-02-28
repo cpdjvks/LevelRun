@@ -7,6 +7,7 @@ from config import Config
 from mysql_connection import get_connection
 class GachaResource(Resource):
     # 뽑기(가챠) 획득하고 컬렉션에 저장
+    
     @jwt_required()
     def get(self):
         user_id = get_jwt_identity()
